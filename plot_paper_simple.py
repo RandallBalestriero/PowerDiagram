@@ -45,7 +45,7 @@ class CircleSpace:
 
 
 
-def plot(w,b,name='noname.png'):
+def plot1(w,b,name='noname.png'):
 	K = len(w)
 	V = Voronoi(w,b)
 	C = V.cluster(space.X).reshape((N,N))
@@ -191,6 +191,47 @@ def plot3(w,b,name='noname.png'):
 
 
 
+def plotPD(w,b,name='noname.png'):
+        K = len(w)
+        V = Voronoi(w,b)
+        C = V.cluster(space.X).reshape((N,N))
+        C/=C.max()
+        #PLOT THE VQ
+        Q = array([0.8,-0.8])
+        imshow(C,aspect='auto',interpolation='nearest',cmap='RdYlGn',extent=[MIN,MAX,MIN,MAX])#,levels = levels*0.000001,cmap='Greys')
+        for k in range(K):
+            plot([w[k,0]],[w[k,1]],'ok',ms=6)
+            if(V.r[k]>0):
+                theta  = linspace(-1,1,400)
+                POINTS = []
+                for t in theta:
+                    POINTS.append([sqrt(V.r[k])*t,sqrt(V.r[k]-V.r[k]*t**2)])
+                POINTS = asarray(POINTS)
+                POINTS = concatenate([POINTS,flipud(POINTS[1:]),array([POINTS[0,0],POINTS[0,1]]).reshape((1,-1))],0)
+                POINTS[400:,1]*=-1
+                print POINTS
+                POINTS+= w[k].reshape((1,-1))
+                for a,ab in zip(POINTS[:-1],POINTS[1:]):
+                    plot([a[0],ab[0]],[a[1],ab[1]],'k',alpha=0.8)
+                DISTANCES = ((POINTS-Q.reshape((1,-1)))**2).sum(1)
+                print shape(w),shape(b)
+                POSI = argsort((DISTANCES-((w[k]-Q)**2).sum()+b[k])**2)
+                plot([POINTS[POSI[0],0],Q[0]],[POINTS[POSI[0],1],Q[1]],color='k',linestyle='solid')
+                plot([POINTS[POSI[1],0],Q[0]],[POINTS[POSI[1],1],Q[1]],color='k',linestyle='solid')
+                plot([POINTS[POSI[2],0],Q[0]],[POINTS[POSI[2],1],Q[1]],color='k',linestyle='solid')
+                #
+                plot([w[k,0],Q[0]],[w[k,1],Q[1]],color='k',linestyle='dotted')
+                #
+                plot([POINTS[POSI[0],0],w[k,0]],[POINTS[POSI[0],1],w[k,1]],color='k',linestyle='dashed')
+                plot([POINTS[POSI[1],0],w[k,0]],[POINTS[POSI[1],1],w[k,1]],color='k',linestyle='dashed')
+                plot([POINTS[POSI[2],0],w[k,0]],[POINTS[POSI[2],1],w[k,1]],color='k',linestyle='dashed')
+        xticks([])
+        yticks([])
+        plot([Q[0]],[Q[1]],'xb',ms=14)
+        plot([Q[0]],[Q[1]],'ob',ms=6)
+        tight_layout()
+        if(name is not None):
+                savefig(name)
 
 
 
@@ -218,7 +259,14 @@ K        = len(w)
 #ax = subplot(111,projection='3d')
 #plot(w,zeros(K),'VQ_nobias.png')
 #close()
-#i
+
+# ZERO BIAS
+#figure(figsize=(10,12))#,dpi=20)
+#ax = subplot(111,projection='3d')
+#plot(w,(w**2).sum(1),'VQ_zerobias.png')
+#close()
+
+
 
 # NEURONS AND LAYER RANDOM
 MIN,MAX  = -3.5,3.5
@@ -231,7 +279,7 @@ W = randn(3,3,2)/3
 B = rand(3,3)/5
 
 ####################################################################################
-
+# PLOT FOR NEURON AND LAYER WITH THE THREE THINGS
 WW = []
 BB = []
 for a in xrange(3):
@@ -259,7 +307,7 @@ BB = asarray(BB)
 #plot2(WW,BB,'VQ_layer.png')
 
 ###############################################################################################################
-# ABS
+# NEURONS AND LAYER FOR ABS
 W = W[:,:2]
 W[:,0]=-W[:,1]
 B = B[:,:2]
@@ -291,7 +339,7 @@ BB = asarray(BB)
 
 
 ###############################################################################################################
-# RELU
+# NEURONS AND LAYER FOR RELU
 W[:,0]=0.*W[:,1]
 B[:,0]=0.*B[:,1]
 WW = []
@@ -323,7 +371,8 @@ BB = asarray(BB)
 
 
 ################################################################################################
-# decision trees
+# PLOT IN 2D OF THE REGIONS FOR DIFFERENT WEIGHTS CONSTRAINTS
+
 seed(18)
 W = randn(3,3,2)/3
 B = rand(3,3)/5
@@ -342,10 +391,10 @@ for a in xrange(2):
 WW = asarray(WW)
 BB = asarray(BB)
 
-figure(figsize=(4,4))#,dpi=20)
-ax = subplot(111)
-plot3(WW,BB,'VQ_layer_diag.png')
-
+#figure(figsize=(4,4))#,dpi=20)
+#ax = subplot(111)
+#plot3(WW,BB,'VQ_layer_diag.png')
+#close()
 
 
 seed(100)
@@ -366,29 +415,45 @@ for a in xrange(2):
 WW = asarray(WW)
 BB = asarray(BB)
 
+#figure(figsize=(4,4))#,dpi=20)
+#ax = subplot(111)
+#plot3(WW,BB,'VQ_layer_parallel.png')
+#close()
+
+
+seed(100)
+W = randn(3,3,2)/3
+B = rand(3,3)/3
+W[:,0]=0.*W[:,1]
+B[:,0]=0.*B[:,1]
+
+WW = []
+BB = []
+for a in xrange(2):
+        for b in xrange(2):
+                for c in xrange(2):
+                        WW.append(W[0,a]+W[1,b]+W[2,c])
+                        BB.append(B[0,a]+B[1,b]+B[2,c]-2*sum(W[0,a]*W[1,b])-2*sum(W[0,a]*W[2,c])-2*sum(W[1,b]*W[2,c]))
+
+WW = asarray(WW)
+BB = asarray(BB)
+
+#figure(figsize=(4,4))#,dpi=20)
+#ax = subplot(111)
+#plot3(WW,BB,'VQ_layer_random.png')
+#close()
+
+
+
+
+
+
+#####################################################
+# PLOT POWER DIAGRAM
+W = array([[-1.8,-1.8],[1.2,1.2],[-1.5,1.2]])#randn(3,2)*1.3
+B = 0.5+rand(3)/2
+
 figure(figsize=(4,4))#,dpi=20)
-ax = subplot(111)
-plot3(WW,BB,'VQ_layer_parallel.png')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+plotPD(W,B,'PD_random.png')
+close()
 

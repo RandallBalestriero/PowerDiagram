@@ -5,112 +5,6 @@ import glob
 from sklearn.datasets import fetch_mldata
 from sklearn.cross_validation import train_test_split
 
-def myortho(W,shape):
-	n_shape  = (shape[-1],prod(shape[:-1]))
-	filters  = tf.reshape(tf.transpose(W,[3,0,1,2]),n_shape)
-	basis    = tf.expand_dims(filters[0,:],0)#/tf.norm(filters[0,:]),0)
-	for i in range(1,shape[-1]):
-	        coeffs = tf.reduce_sum(basis*tf.expand_dims(filters[i],0),1)/tf.reduce_sum(basis*basis,axis=1)
-	        w      = filters[i] - tf.reduce_sum(tf.expand_dims(coeffs,-1)*basis,0)
-	        basis  = tf.concat([basis, tf.expand_dims(w,0)],axis=0)
-	return tf.transpose(tf.reshape(basis,(shape[-1],shape[0],shape[1],shape[2])),[1,2,3,0])
-
-
-
-
-def myortho3(W,shape):
-	n_shape  = (shape[-1],prod(shape[:-1]))
-	filters  = tf.reshape(tf.transpose(W,[3,0,1,2]),n_shape)
-#	return tf.transpose(tf.reshape(tf.qr(filters,full_matrices=True)[0],(shape[-1],shape[0],shape[1],shape[2])),[1,2,3,0])
-	acc = tf.Variable(tf.zeros(n_shape),trainable=False)
-	basis    = filters*tf.expand_dims(tf.one_hot(0,n_shape[0]),-1)#/tf.norm(filters[0,:]),0),-1)
-	for i in range(1,shape[-1]):
-	        coeffs = tf.reduce_sum(basis*tf.expand_dims(filters[i],0),axis=1)/(tf.reduce_sum(basis*basis,axis=1)+0.0000001)
-	        basis += filters*tf.expand_dims(tf.one_hot(i,n_shape[0]),-1)-tf.expand_dims(tf.tensordot(basis,coeffs,[[0],[0]]),0)*tf.expand_dims(tf.one_hot(i,n_shape[0]),-1)
-	return tf.transpose(tf.reshape(basis,(shape[-1],shape[0],shape[1],shape[2])),[1,2,3,0])
-
-
-
-def myortho2(W,shape):
-        n_shape  = (shape[-1],shape[0])
-        filters  = tf.reshape(tf.transpose(W,[1,0]),n_shape)
-        basis    = tf.expand_dims(filters[0,:],0)#/tf.norm(filters[0,:]),0)
-        for i in range(1,shape[-1]):
-                coeffs = tf.reduce_sum(basis*tf.expand_dims(filters[i],0),1)/tf.reduce_sum(basis*basis,1)
-                w      = filters[i] - tf.reduce_sum(tf.expand_dims(coeffs,-1)*basis,0)
-                basis  = tf.concat([basis, tf.expand_dims(w,0)],axis=0)
-        return tf.transpose(basis,[1,0])
-
-
-
-
-def VQ2values(VQ):
-	values = zeros(VQ.shape[0])
-	d=dict()
-	for v in VQ:
-		if(str(v) not in d.keys()):
-			d[str(v)]=randn(1)[0]
-	for v,i in zip(VQ,range(len(values))):
-		values[i]=d[str(v)]
-	return values
-
-
-def VQ2boundaries(xx,VQ):
-	values = VQ2values(VQ)
-        Z=values.reshape(xx.shape)
-        Z=abs(Z[1:,1:]-Z[1:,:-1])+abs(Z[1:,1:]-Z[:-1,1:])+abs(Z[1:,:-1]-Z[:-1,1:])+abs(Z[:-1,1:]-Z[1:,:-1])
-        Z=(abs(Z)>1).astype('float32')
-#        Z=(convolve2d(Z,ones((4,4)),'same')>1).astype('float32')
-	return pad(1-Z,[[1,0],[1,0]],'constant')
-#        contourf(xx[1:,1:], yy[1:,1:], 1-Z, alpha=0.85,cmap='gray',interpolation='nearest')
-
-
-
-
-
-
-
-
-
-
-
-
-class adam:
-	def __init__(self,alpha=0.001,beta1=0.9,beta2=0.999,epsilon=1e-8):
-                self.alpha = alpha
-                self.beta1 = beta1
-                self.beta2 = beta2
-                self.epsilon = epsilon
-	def apply(self,loss_or_grads,variables):
-		self.m  = dict()
-		self.u  = dict()
-		updates = dict()
-		# If loss generate the gradients else setup the gradients
-		if(isinstance(loss_or_grads,list)):
-			gradients = loss_or_grads
-		else:
-			gradients = tf.gradients(loss_or_grads,variables)
-		# INIT THE Variables and Update Rules
-		self.t = tf.Variable(0.0, trainable=False)
-		t      = self.t.assign_add(1.0)
-		updates[self.t]= self.t.assign_add(1.0)
-		for g,v in zip(gradients,variables):
-			print v
-			self.m[v] = tf.Variable(tf.zeros(tf.shape(v.initial_value)), 'm')
-			self.u[v] = tf.Variable(tf.zeros(tf.shape(v.initial_value)), 'u')
-               	        updates[self.m[v]] = self.m[v].assign(self.beta1*self.m[v] + (1-self.beta1)*g)
-               	        updates[self.u[v]] = self.u[v].assign(self.beta2*self.u[v] + (1-self.beta2)*g*g)
-			updates[v]         = v.assign_sub(self.alpha*updates[self.m[v]]/(tf.sqrt(updates[self.u[v]])+self.epsilon))
-		print tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-		final = tf.get_collection(tf.GraphKeys.UPDATE_OPS)+updates.values()
-		return tf.group(*final)
-
-
-
-def set_betas(value):
-	betas = tf.get_collection('beta')
-	return [tf.assign(b,tf.zeros_like(b)+value) for b in betas]
-
 ###################################################################
 #
 #
@@ -118,71 +12,105 @@ def set_betas(value):
 #
 #
 ###################################################################
-def load_utility(DATASET):
-	if(DATASET=='MNIST'):
-	        batch_size = 50
-	        mnist         = fetch_mldata('MNIST original')
-	        x             = mnist.data.reshape(70000,1,28,28).astype('float32')
-	        y             = mnist.target.astype('int32')
-	        x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=10000,stratify=y)
-	        input_shape   = (batch_size,28,28,1)
-		x_train = transpose(x_train,[0,2,3,1])
-		x_test  = transpose(x_test,[0,2,3,1])
-		c = 10
-        	n_epochs = 150
 
-	elif(DATASET == 'CIFAR'):
-	        batch_size = 50
-	        TRAIN,TEST = load_cifar(3)
-	        x_train,y_train = TRAIN
-	        x_test,y_test     = TEST
-	        input_shape       = (batch_size,32,32,3)
-	        x_train = transpose(x_train,[0,2,3,1])
-	        x_test  = transpose(x_test,[0,2,3,1])
-		c=10
-	        n_epochs = 150
 
-	elif(DATASET == 'CIFAR100'):
-		batch_size = 100
-	        TRAIN,TEST = load_cifar100(3)
-	        x_train,y_train = TRAIN
-	        x_test,y_test     = TEST
-	        input_shape       = (batch_size,32,32,3)
-	        x_train = transpose(x_train,[0,2,3,1])
-	        x_test  = transpose(x_test,[0,2,3,1])
-	        c=100
-	        n_epochs = 200
+def load_data(DATASET,batch_size,k=-1,unlabeled=False):
+    if(DATASET=='MNIST'):
+        mnist         = fetch_mldata('MNIST original')
+        x             = mnist.data.reshape(70000,1,28,28).astype('float32').transpose([0,3,1,2])
+        y             = mnist.target.astype('int32')
+        x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=10000,stratify=y)
+        input_shape = (batch_size,28,28,1)
+        c=10
+    elif(DATASET=='STL10'):
+        x_train = read_all_images('../../DATASET/STL10/train_X.bin')
+        y_train = read_labels('../../DATASET/STL10/train_y.bin')
+        x_test  = read_all_images('../../DATASET/STL10/train_X.bin')
+        y_test  = read_labels('../../DATASET/STL10/test_y.bin')
+        if(unlabeled):
+            x_unsup = read_all_images('../../DATASET/SST10/unlabeled.bin')
+            x_train = concatenate([x_train,x_unsup],0)
+            y_train = concatenate([my_onehot(y_train,10),ones((x_unsup.shape[0],10))/10])
+            Y_mask  = concatenate([zeros(len(y_train)),ones(x_unsup.shape[0])])
+        else: Y_mask = zeros(len(y_train))
+    elif(DATASET=='FASHION'):
+        from numpy import loadtxt
+        ff = loadtxt('../../DATASET/fashion-mnist_train.csv',delimiter=',',skiprows=1)
+        x_train = ff[:,1:].reshape((-1,1,28,28)).astype('float32').transpose([0,3,1,2])
+        y_train = ff[:,0].astype('int32')
+        ff = loadtxt('../../DATASET/fashion-mnist_test.csv',delimiter=',',skiprows=1)
+        x_test = ff[:,1:].reshape((-1,1,28,28)).astype('float32').transpose([0,3,1,2])
+        y_test = ff[:,0].astype('int32')
+        input_shape = (batch_size,28,28,1)
+        c=10
+    elif(DATASET == 'CIFAR'):
+        TRAIN,TEST = load_cifar(3)
+        x_train,y_train = TRAIN
+        x_test,y_test     = TEST
+        input_shape       = (batch_size,32,32,3)
+        x_train = transpose(x_train,[0,2,3,1])
+        x_test  = transpose(x_test,[0,2,3,1])
+        c = 10
+    elif(DATASET == 'CIFAR100'):
+        TRAIN,TEST = load_cifar100(3)
+        x_train,y_train = TRAIN
+        x_test,y_test     = TEST
+        input_shape       = (batch_size,32,32,3)
+        x_train = transpose(x_train,[0,2,3,1])
+        x_test  = transpose(x_test,[0,2,3,1])
+        c=100
+    elif(DATASET=='IMAGE'):
+	batch_size=200
+        x,y           = load_imagenet()
+	x = x.astype('float32')
+	y = y.astype('int32')
+        x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=20000,stratify=y)
+        input_shape   = (batch_size,64,64,3)
+	c=200
+        n_epochs = 200
+    else:
+        TRAIN,TEST        = load_svhn()
+        x_train,y_train   = TRAIN
+        x_test,y_test     = TEST
+        input_shape       = (batch_size,32,32,3)
+        x_train = transpose(x_train,[0,2,3,1])
+        x_test  = transpose(x_test,[0,2,3,1])
+	c=10
+    ptr = permutation(len(x_train))
+    pte = permutation(len(x_test))
+    x_train          -= x_train.mean((1,2,3),keepdims=True)
+    x_test           -= x_test.mean((1,2,3),keepdims=True)
+    x_train          /= abs(x_train).max((1,2,3),keepdims=True)
+    x_test           /= abs(x_test).max((1,2,3),keepdims=True)
+    x_train           = x_train.astype('float32')
+    x_test            = x_test.astype('float32')
+    y_train           = array(y_train).astype('int32')
+    y_test            = array(y_test).astype('int32')
+    return x_train[ptr],y_train[ptr],x_test[pte],y_test[pte],input_shape,c
 
-	elif(DATASET=='IMAGE'):
-		batch_size=200
-	        x,y           = load_imagenet()
-		x = x.astype('float32')
-		y = y.astype('int32')
-	        x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=20000,stratify=y)
-	        input_shape   = (batch_size,64,64,3)
-		c=200
-	        n_epochs = 200
 
-	else:
-	        batch_size = 50
-	        TRAIN,TEST = load_svhn()
-	        x_train,y_train = TRAIN
-	        x_test,y_test     = TEST
-	        input_shape       = (batch_size,32,32,3)
-       		x_train = transpose(x_train,[0,2,3,1])
-        	x_test  = transpose(x_test,[0,2,3,1])
-		c=10
-        	n_epochs = 150
 
-	x_train          -= x_train.mean((1,2,3),keepdims=True)
-	x_train          /= abs(x_train).max((1,2,3),keepdims=True)
-	x_test           -= x_test.mean((1,2,3),keepdims=True)
-	x_test           /= abs(x_test).max((1,2,3),keepdims=True)
-	x_train           = x_train.astype('float32')
-	x_test            = x_test.astype('float32')
-	y_train           = array(y_train).astype('int32')
-	y_test            = array(y_test).astype('int32')
-	return x_train,x_test,y_train,y_test,c,n_epochs,input_shape 
+
+
+
+
+
+
+#### SST 10
+def read_labels(path_to_labels):
+    with open(path_to_labels, 'rb') as f:
+        labels = np.fromfile(f, dtype=np.uint8)
+        return labels
+
+
+def read_all_images(path_to_data):
+    with open(path_to_data, 'rb') as f:
+        everything = np.fromfile(f, dtype=np.uint8)
+        images = np.reshape(everything, (-1, 3, 96, 96))
+        images = np.transpose(images, (0, 3, 2, 1))
+        return images.astype('float32')
+
+
 
 
 def principal_components(x):
@@ -203,7 +131,7 @@ def zca_whitening(x, principal_components):
 
 def load_imagenet():
         import scipy.misc
-        classes = glob.glob('../../DATASET/tiny-imagenet-200/train/*')
+        classes = glob.glob('../DATASET/tiny-imagenet-200/train/*')
         x_train,y_train = [],[]
         cpt=0
         for c,name in zip(range(200),classes):
@@ -218,10 +146,10 @@ def load_imagenet():
 
 def load_svhn():
         import scipy.io as sio
-        train_data = sio.loadmat('../../DATASET/train_32x32.mat')
+        train_data = sio.loadmat('../DATASET/train_32x32.mat')
         x_train = train_data['X'].transpose([3,2,0,1]).astype('float32')
         y_train = concatenate(train_data['y']).astype('int32')-1
-        test_data = sio.loadmat('../../DATASET/test_32x32.mat')
+        test_data = sio.loadmat('../DATASET/test_32x32.mat')
         x_test = test_data['X'].transpose([3,2,0,1]).astype('float32')
         y_test = concatenate(test_data['y']).astype('int32')-1
         print y_test
