@@ -35,11 +35,11 @@ def load_data(DATASET,batch_size,k=-1,unlabeled=False):
         else: Y_mask = zeros(len(y_train))
     elif(DATASET=='FASHION'):
         from numpy import loadtxt
-        ff = loadtxt('../../DATASET/fashion-mnist_train.csv',delimiter=',',skiprows=1)
-        x_train = ff[:,1:].reshape((-1,1,28,28)).astype('float32').transpose([0,3,1,2])
+        ff = loadtxt('../DATASET/fashion-mnist_train.csv',delimiter=',',skiprows=1)
+        x_train = ff[:,1:].reshape((-1,1,28,28)).astype('float32').transpose([0,2,3,1])
         y_train = ff[:,0].astype('int32')
-        ff = loadtxt('../../DATASET/fashion-mnist_test.csv',delimiter=',',skiprows=1)
-        x_test = ff[:,1:].reshape((-1,1,28,28)).astype('float32').transpose([0,3,1,2])
+        ff = loadtxt('../DATASET/fashion-mnist_test.csv',delimiter=',',skiprows=1)
+        x_test = ff[:,1:].reshape((-1,1,28,28)).astype('float32').transpose([0,2,3,1])
         y_test = ff[:,0].astype('int32')
         input_shape = (batch_size,28,28,1)
         c=10
