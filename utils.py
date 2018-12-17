@@ -200,7 +200,7 @@ def load_mnist():
         return [concatenate([data[0][0],data[1][0]]).reshape(60000,1,28,28),concatenate([data[0][1],data[1][1]])],[data[2][0].reshape(10000,1,28,28),data[2][1]]
 
 def load_cifar(channels=1):
-        path = '../../DATASET/cifar-10-batches-py/'
+        path = '../DATASET/cifar-10-batches-py/'
         x_train = []
         y_train = []
         x_test = []
@@ -217,7 +217,7 @@ def load_cifar(channels=1):
 
 
 def load_cifar100(channels=1):
-        path = '../../DATASET/cifar-100-python/'
+        path = '../DATASET/cifar-100-python/'
         PP = unpickle100(path+'train',1,channels)
         x_train = PP[0]
         y_train = PP[1]
@@ -228,36 +228,6 @@ def load_cifar100(channels=1):
 
 
 
-
-def train(x_train,y_train,x_test,y_test,session,train_opt,loss,accu,x,y_,test,name='caca',n_epochs=5):
-        n_train = x_train.shape[0]/batch_size
-        n_test  = x_test.shape[0]/batch_size
-        train_loss          = []
-        test_loss           = []
-        for e in xrange(n_epochs):
-                print 'epoch',e
-                for i in xrange(n_train):
-                        session.run(train_opt,feed_dict={x:x_train[batch_size*i:batch_size*(i+1)],y_:y_train[batch_size*i:batch_size*(i+1)],test:True})
-                        train_loss.append(session.run(loss,feed_dict={x:x_train[batch_size*i:batch_size*(i+1)],y_:y_train[batch_size*i:batch_size*(i+1)],test:True}))
-                acc1 = 0
-                acc2 = 0
-                for i in xrange(n_test):
-                        acc1+=session.run(accu,feed_dict={x:x_test[batch_size*i:batch_size*(i+1)],y_:y_test[batch_size*i:batch_size*(i+1)],test:False})
-                test_loss.append(acc1/n_test)
-		print test_loss[-1]
-	return train_loss,test_loss
-
-
-
-
-
-##################################################
-def compute_loss(logits, labels):
-	labels = tf.cast(labels, tf.int64)
-	cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits, name='cross_entropy')
-	cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
-#	tf.add_to_collection('losses', cross_entropy_mean)
-	return cross_entropy_mean#tf.add_n(tf.get_collection('losses'), name='total_loss')
 
 
 

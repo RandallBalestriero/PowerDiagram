@@ -34,7 +34,7 @@ class DNNClassifier(object):
 		self.e    += 1
         	n_train    = X.shape[0]/self.batch_size
         	train_loss = []
-        	for i in xrange(n_train):
+        	for I in xrange(n_train):
 			if(self.batch_size<self.n_classes):
 				here = [random.sample(k,1) for k in indices]
 				here = [here[i] for i in permutation(self.n_classes)[:self.batch_size]]
@@ -42,9 +42,9 @@ class DNNClassifier(object):
 				here = [random.sample(k,self.batch_size/self.n_classes) for k in indices]
 			here = concatenate(here)
                         self.session.run(self.apply_updates,feed_dict={self.x:X[here],self.y_:y[here],self.training:True,self.learning_rate:float32(self.lr)})
-			if(i%update_time==0):
+			if(I%update_time==0):
                                 train_loss.append(self.session.run(self.loss,feed_dict={self.x:X[here],self.y_:y[here],self.training:False}))
-                                print i,n_train,train_loss[-1]
+                                print I,n_train,train_loss[-1]
         	return train_loss
         def fit(self,X,y,X_test,y_test,n_epochs=5):
 		train_loss = []
@@ -54,10 +54,10 @@ class DNNClassifier(object):
                 n_test     = X_test.shape[0]/self.batch_size
                 indices    = [find(y==k) for k in xrange(self.n_classes)]
                 print [len(i) for i in indices]
-		for i in xrange(n_epochs):
-                        if(i==90): self.lr/=5
-                        elif(i==130): self.lr/=5
-			print "epoch",i
+		for II in xrange(n_epochs):
+                        if(II==90): self.lr/=5
+                        elif(II==130): self.lr/=5
+			print "epoch",II
 			train_loss.append(self._fit(X,y,indices))
                 	acc1 = 0.0
                 	for j in xrange(n_test):
