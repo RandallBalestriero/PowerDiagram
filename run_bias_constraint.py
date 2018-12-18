@@ -22,7 +22,7 @@ DATASET          = sys.argv[-1]
 bias_constraint  = sys.argv[-2]
 model_nb         = int(sys.argv[-3])
 
-batch_norm       = True
+batch_norm       = int(sys.argv[-4])
 ne               = 150
 batch_size       = 50
 
@@ -31,7 +31,10 @@ model,model_name = models[model_nb],models_names[model_nb]
 for k in xrange(10):
     for lr in lrs:
         for init,init_name in zip(init_ws,init_ws_names):
-	    name   = 'VORONOI/bias_constraint_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_init'+init_name+'_'+bias_constraint+'_run'+str(k)
+	    if(batch_norm):
+	    	name   = 'VORONOI/bias_constraint_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_init'+init_name+'_'+bias_constraint+'_run'+str(k)
+	    else:
+		name   = 'VORONOI/bias_constraint_nob_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_init'+init_name+'_'+bias_constraint+'_run'+str(k)
 	    x_train,y_train,x_test,y_test,input_shape,c=load_data(DATASET,batch_size=batch_size)
 ####
 	    m      = model(bn=batch_norm,bias_option=bias_constraint,init_W=init,n_classes=c)

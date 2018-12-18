@@ -45,8 +45,7 @@ class DenseLayer:
         in_dim = prod(incoming.output_shape[1:])
         self.W = tf.Variable(init_W((in_dim,n_output)),name='W_dense',trainable=True)
 	self.output_shape = (incoming.output_shape[0],n_output)
-        if(bn): renorm_input = tf.layers.batch_normalization(reshape_input,training=training)
-        else:           renorm_input = reshape_input
+        renorm_input = tf.layers.batch_normalization(reshape_input,training=training,center=bn)
         if(bias_option=='unconstrained'):
             self.b = tf.Variable(init_b((1,n_output)),name='b_dense',trainable=True)
 	elif(bias_option=='constrained'):
@@ -58,9 +57,9 @@ class DenseLayer:
 
 
 class ConvLayer:
-    def __init__(self,incoming,n_filters,filter_shape,bias_option='unconstrained',training=None,bn=True,init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),pad='VALID'):
-        if(bn): renorm_input = tf.layers.batch_normalization(incoming.output,training=training)
-        else:           renorm_input = incoming.output
+    def __init__(self,incoming,n_filters,filter_shape,bias_option='unconstrained',training=None,bn=True,init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),pad='VALID',first=False):
+	if(first): renorm_input = incoming.output
+        else:	   renorm_input = tf.layers.batch_normalization(incoming.output,training=training,center=bn)
         if(pad=='VALID'):
             padded_input      = renorm_input
             self.output_shape = (incoming.output_shape[0],(incoming.output_shape[1]-filter_shape+1),(incoming.output_shape[1]-filter_shape+1),n_filters)

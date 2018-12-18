@@ -91,7 +91,7 @@ class largeCNN:
                 self.bias_option = bias_option
         def get_layers(self,input_variable,input_shape,training):
                 layers = [InputLayer(input_shape,input_variable)]
-                layers.append(ConvLayer(layers[-1],64,5,pad='SAME',training=training,bn=False,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(ConvLayer(layers[-1],64,5,pad='SAME',training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
                 layers.append(ConvLayer(layers[-1],96,3,pad='FULL',training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(ConvLayer(layers[-1],96,3,pad='FULL',training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(Pool2DLayer(layers[-1],2,pool_type='MAX'))
@@ -118,7 +118,7 @@ class smallCNN:
                 self.bias_option = bias_option
         def get_layers(self,input_variable,input_shape,training):
                 layers = [InputLayer(input_shape,input_variable)]
-                layers.append(ConvLayer(layers[-1],64,5,pad='SAME',training=training,bn=False,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(ConvLayer(layers[-1],64,5,pad='SAME',training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
                 layers.append(Pool2DLayer(layers[-1],2,pool_type='MAX'))
                 layers.append(ConvLayer(layers[-1],128,3,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(Pool2DLayer(layers[-1],2,pool_type='MAX'))
