@@ -19,6 +19,12 @@ def count_number_of_params():
 	print np.sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()])
 
 
+def cosine_distance(x1, x2,axis):
+    x1_val = tf.nn.l2_normalize(x1,axis=axis)
+    x2_val = tf.nn.l2_normalize(x2,axis=axis)
+    return 1-tf.reduce_sum(x1_val*x2_val)
+
+
 ###########################################################################################
 #
 #
@@ -32,32 +38,77 @@ class Pool2DLayer:
 	self.output = tf.nn.pool(incoming.output,(window,window),pool_type,padding='VALID',strides=(window,window))
 
 
+
+
 class InputLayer:
     def __init__(self,input_shape,x):
 	self.output = x
 	self.output_shape = input_shape
 
+
+
+class SpecialDenseLayer:
+    def __init__(self,incoming,n_output,constraint='none',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.)):
+        # bias_option : {unconstrained,constrained,zero}
+	if(len(incoming.output_shape)>2): reshape_input = tf.layers.flatten(incoming.output)
+	else:                             reshape_input = incoming.output
+        in_dim      = prod(incoming.output_shape[1:])
+	self.gamma  = tf.Variable(ones(1,float32),trainable=False)
+	if(constraint=='none'):
+        	self.W      = tf.Variable(init_W((in_dim,n_output)),name='W_dense',trainable=True)
+		self.W_     = self.W
+	elif(constraint=='dt'):
+                self.W      = tf.Variable(init_W((in_dim,n_output)),name='W_dense',trainable=True)
+		self.sign   = tf.Variable(ones((1,n_output),float32),trainable=True)
+		self.alpha  = tf.Variable(ones((1,n_output),float32),trainable=True)
+		self.W_     = self.alpha*tf.nn.tanh(self.gamma*self.sign)*tf.nn.softmax(self.gamma*self.W,axis=0)
+	elif(constraint=='diag'):
+                self.W      = tf.Variable(init_W((2,n_output)),name='W_dense',trainable=True)
+                self.sign   = tf.Variable(ones((2,n_output),float32),trainable=True)
+                self.alpha  = tf.Variable(ones((1,n_output),float32),trainable=True)
+                self.W_     = self.alpha*tf.nn.tanh(self.gamma*self.sign)*tf.nn.sigmoid(self.gamma*self.W)
+	self.output_shape = (incoming.output_shape[0],n_output)
+        self.b      = tf.Variable(init_b((1,n_output)),name='b_dense',trainable=True)
+	output      = tf.matmul(reshape_input,self.W_)+self.b
+	self.state  = tf.greater(output,0)
+	self.output = tf.cast(self.state,tf.float32)*output
+
+
+
+
 class DenseLayer:
-    def __init__(self,incoming,n_output,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),bn=True,training=None,nonlinearity=True):
+    def __init__(self,incoming,n_output,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),bn=True,training=None,nonlinearity='relu',first=False):
         # bias_option : {unconstrained,constrained,zero}
 	if(len(incoming.output_shape)>2): reshape_input = tf.layers.flatten(incoming.output)
 	else:                             reshape_input = incoming.output
         in_dim = prod(incoming.output_shape[1:])
         self.W = tf.Variable(init_W((in_dim,n_output)),name='W_dense',trainable=True)
 	self.output_shape = (incoming.output_shape[0],n_output)
-        renorm_input = tf.layers.batch_normalization(reshape_input,training=training,center=bn)
+	print reshape_input
+	if(first==False):    renorm_input = tf.layers.batch_normalization(reshape_input,training=training,center=bn)
+	else: renorm_input = reshape_input
         if(bias_option=='unconstrained'):
             self.b = tf.Variable(init_b((1,n_output)),name='b_dense',trainable=True)
 	elif(bias_option=='constrained'):
 	    self.b = -tf.reduce_sum(tf.square(self.W),axis=0,keep_dims=True)*0.5
 	else:
             self.b = tf.zeros((1,n_output))
-        if(nonlinearity):self.output = tf.nn.relu(tf.matmul(renorm_input,self.W)+self.b)
-        else            :self.output = tf.matmul(renorm_input,self.W)+self.b
-
+	output = tf.matmul(renorm_input,self.W)+self.b
+        if(nonlinearity=='relu'):
+		self.state  = tf.greater(output,0)
+		self.output = tf.cast(self.state,tf.float32)*output
+	elif(nonlinearity=='lrelu'):
+                self.state  = tf.greater(output,0)
+                self.output = tf.cast(self.state,tf.float32)*output+0.01*(1-tf.cast(self.state,tf.float32))*output
+	elif(nonlinearity=='abs'):
+                self.state  = tf.greater(output,0)
+                self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
+        else:	self.output = output
+	reconstruction           = tf.gradients(self.output,renorm_input)[0]
+	self.reconstruction_loss = cosine_distance(reconstruction,incoming.output,axis=range(len(1,incoming.output_shape)))
 
 class ConvLayer:
-    def __init__(self,incoming,n_filters,filter_shape,bias_option='unconstrained',training=None,bn=True,init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),pad='VALID',first=False):
+    def __init__(self,incoming,n_filters,filter_shape,bias_option='unconstrained',training=None,bn=True,init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),pad='VALID',first=False,nonlinearity='relu'):
 	if(first): renorm_input = incoming.output
         else:	   renorm_input = tf.layers.batch_normalization(incoming.output,training=training,center=bn)
         if(pad=='VALID'):
@@ -79,8 +130,19 @@ class ConvLayer:
             self.b = -tf.reduce_sum(tf.square(self.W),axis=[0,1,2],keepdims=True)*0.5
         else:
             self.b = tf.zeros((1,1,1,n_filters))
-	self.output = tf.nn.relu(tf.nn.conv2d(padded_input,self.W,strides=[1,1,1,1],padding='VALID')+self.b)
-
+	output     = tf.nn.conv2d(padded_input,self.W,strides=[1,1,1,1],padding='VALID')+self.b
+	if(self.nonlinearity=='relu'):
+		self.state  = tf.greater(output,0)
+		self.output = tf.cast(self.state,tf.float32)*output
+	elif(self.nonlinearity=='lrelu'):
+                self.state  = tf.greater(output,0)
+                self.output = tf.cast(self.state,tf.float32)*output+0.01*(1-tf.cast(self.state,tf.float32))*output
+	elif(self.nonlinearity=='abs'):
+                self.state  = tf.greater(output,0)
+                self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
+	else:	self.output = output
+        reconstruction           = tf.gradients(self.output,renorm_input)[0]
+        self.reconstruction_loss = cosine_distance(reconstruction,incoming.output,axis=range(len(1,incoming.output_shape)))
 
 
 
@@ -88,7 +150,7 @@ class GlobalPoolLayer:
     def __init__(self,incoming,pool_type='AVG',global_beta=1):
         self.output = tf.reduce_mean(incoming.output,[1,2],keep_dims=True)
         self.output_shape = [incoming.output_shape[0],1,1,incoming.output_shape[3]]
-
+	self.reconstruction_loss = float32(0)
 
 
 

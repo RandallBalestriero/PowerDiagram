@@ -62,29 +62,13 @@ yyy=yy.flatten()
 DD = asarray([xxx,yyy]).astype('float32').T
 
 
-for D1 in [45]:
-	for R in [3]:
-		for bn in [1]:
-#                        name = DATASET+'_'+model_name+'_bn'+str(bn)+'_'+nonlinearity+'_VQmoons.pkl'
-			m = VQlinear(bn=bn,n_classes=2,D1=D1,R=3,global_beta=1,pool_type='MAX',use_beta=1)
-			model1    = VQClassifier(input_shape,m,optimizer = tf.train.AdamOptimizer,lr=lr,learn_beta=0)
-			updates   = set_betas(float32(0))
-			model1.session.run(updates)
-			train_loss_pre,test_loss_pre = model1.fit(x_train,y_train,x_test,y_test,n_epochs=8)
-#			VQ = model1.getVQ(x_train)
-#			preds = model1.predict(x_train)
-#			values0 = VQ2values(VQ[0])
-#
-			m = linear(bn=bn,n_classes=2,D1=D1,R=3,global_beta=1,pool_type='MAX',use_beta=1)
-			model1    = DNNClassifier(input_shape,m,optimizer = tf.train.AdamOptimizer,lr=lr,learn_beta=0)
-			updates   = set_betas(float32(0))
-			model1.session.run(updates)
-			train_loss_pre,test_loss_pre = model1.fit(x_train,y_train,x_test,y_test,n_epochs=8)
-#			VQ = model1.getVQ(x_train)
-#			preds = model1.predict(x_train)
-#                        values1 = VQ2values(VQ[0])
-#	
-	
+m      = SpecialDense(constraint='dt',n_classes=4)
+model1 = SpecialDNNClassifier(input_shape,m,lr=lr)
+train_loss_pre,train_accu,test_loss_pre = model1.fit(x_train,y_train,x_test,y_test,n_epochs=120)
+
+predict = model1.predict(DD)
+imshow(predict.argmax(1).reshape((500,500)))
+show()	
 	
 
 
