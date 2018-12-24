@@ -1,43 +1,114 @@
 from pylab import *
 import glob
 import cPickle
-
+import tabulate
 
 import os
 SAVE_DIR = os.environ['SAVE_DIR']
 
 
-files = glob.glob(SAVE_DIR+'VORONOI/bias_constraint*')
-FILES = sort(unique([f.split('run')[0] for f in files]))
 
-for name in FILES:
-	all_files = glob.glob(name+'*.pkl')
-	for FILE in all_files:
-		f = open(FILE,'rb')
-		train_loss,train_accu,test_accu = cPickle.load(f)
-		f.close()
-		print name,test_accu[-3:]
 
-def do_plots(dataset):
-	files = glob.glob('/mnt/project2/rb42Data/SMASO/'+dataset+'*bn1*_molly.pkl')
-	print files
-	for f in files:
-		file1 = open(f,'rb')
-		data = cPickle.load(file1)
-		data =asarray(data)
-		data = [d.mean(0) for d in data]
-		print shape(data[0])
-		file1.close()
-		subplot(121)
-		plot(data[0],'k')
-		plot(data[2])
-		subplot(122)
-		plot(data[1],'k')
-		plot(data[3])
 
+
+
+
+
+def get_stat(name):
+        all_files = glob.glob(name)
+        TRAIN_LOSS,TRAIN_ACCU,TEST_ACCU=[],[],[]
+        for FILE in all_files:
+                f = open(FILE,'rb')
+                train_loss,train_accu,test_accu = cPickle.load(f)
+                f.close()
+                TRAIN_LOSS.append(train_loss)
+                TEST_ACCU.append(asarray(test_accu))
+                TRAIN_ACCU.append(asarray(train_accu))
+	if(len(all_files)==0):
+		TRAIN_LOSS = zeros((3,3))
+                TRAIN_ACCU = zeros((3,3))
+                TEST_ACCU  = zeros((3,3))
+        return asarray(TRAIN_LOSS),asarray(TEST_ACCU),asarray(TRAIN_ACCU)
+
+
+
+
+
+
+lrs = ['0.001','0.0005','0.0001']
+models = ['SmallCNN','LargeCNN']
+DATASET = ['FASHION','SVHN','CIFAR','CIFAR100']
+inits = ['XavierNormal','XavierUniform','UniformUnitScaling']
+
+
+MEANS = []
+STDS  = []
+for init in inits:
+	for lr in lrs:
+		MEAN = [[] for i in xrange(6)]
+		STD  = [[] for i in xrange(6)]
+		for dataset in DATASET:
+			for model in models:
 	
-		
+				name  = SAVE_DIR+'VORONOI/bias_constraint_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_unconstrained_run*.pkl'
+				train_loss,test_accu,train_accu = get_stat(name)
+				MEAN[0].append(mean(test_accu[:,-1]))
+				STD[0].append(std(test_accu[:,-1]))
+	
+				name  = SAVE_DIR+'VORONOI/bias_constraint_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_constrained_run*.pkl'
+				train_loss,test_accu,train_accu = get_stat(name)
+				MEAN[1].append(mean(test_accu[:,-1]))
+				STD[1].append(std(test_accu[:,-1]))
+	
+				name  = SAVE_DIR+'VORONOI/bias_constraint_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_zero_run*.pkl'
+				train_loss,test_accu,train_accu = get_stat(name)
+				MEAN[2].append(mean(test_accu[:,-1]))
+				STD[2].append(std(test_accu[:,-1]))
+	#
+				name  = SAVE_DIR+'VORONOI/bias_constraint_nob_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_unconstrained_run*.pkl'
+				train_loss,test_accu,train_accu = get_stat(name)
+				MEAN[3].append(mean(test_accu[:,-1]))
+				STD[3].append(std(test_accu[:,-1]))
+	
+				name  = SAVE_DIR+'VORONOI/bias_constraint_nob_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_constrained_run*.pkl'
+				train_loss,test_accu,train_accu = get_stat(name)
+				MEAN[4].append(mean(test_accu[:,-1]))
+				STD[4].append(std(test_accu[:,-1]))
+	
+				name  = SAVE_DIR+'VORONOI/bias_constraint_nob_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_zero_run*.pkl'
+				train_loss,test_accu,train_accu = get_stat(name)
+				MEAN[5].append(mean(test_accu[:,-1]))
+				STD[5].append(std(test_accu[:,-1]))
+		MEANS.append(MEAN)
+		STDS.append(STD)
+	
+MEANS = asarray(MEANS)
+STDS  = asarray(STDS)
+	
+ARG   = MEANS.argmax(0)
 
+MEAN  = zeros((6,8))
+STD   = zeros((6,8))
+for i in xrange(6):
+	for j in xrange(8):
+		MEAN[i,j]=MEANS[ARG[i,j],i,j]
+                STD[i,j]=STDS[ARG[i,j],i,j]
+
+
+MEAN = asarray(MEAN)*100
+STD  = asarray(STD)*100
+
+MEAN = ((MEAN*10).astype('int32').astype('float32')/10.).astype('str')
+STD  = ((STD*10).astype('int32').astype('float32')/10.).astype('str')
+
+for i in xrange(MEAN.shape[0]):
+	for j in xrange(STD.shape[1]):
+		MEAN[i,j]+=' ABCD '+STD[i,j]
+
+MEAN = tabulate.tabulate(MEAN,tablefmt='latex')
+
+print 'INIT',init
+print MEAN
 
 
 

@@ -3,8 +3,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from numpy import gradient as npgrad
 
 
-def grad(x):
-    return greater(greater(pad(abs(x[1:]-x[:-1]),[[1,0],[0,0]],'constant'),0)+greater(pad(abs(x[:,1:]-x[:,:-1]),[[0,0],[1,0]],'constant'),0)+greater(pad(abs(x[1:,1:]),[[1,0],[1,0]],'constant'),0),0).astype('float32')
+
 
 
 class Voronoi:
@@ -189,18 +188,30 @@ def plot3(w,b,name='noname.png'):
                 savefig(name)
 
 
+def find_closest(a,b):
+	index = [0,0]
+	dist  = sum((a[0]-b[0])**2)
+	for i in xrange(len(a)):
+		for j in xrange(len(b)):
+			if sum((a[i]-b[j])**2)<dist:
+				index=[i,j]
+				dist = sum((a[i]-b[j])**2)
+	return index,a[index[0]]
 
-
-def plotPD(w,b,name='noname.png'):
+def plotPD(w,b,name='noname.png',DO=True):
         K = len(w)
         V = Voronoi(w,b)
         C = V.cluster(space.X).reshape((N,N))
         C/=C.max()
         #PLOT THE VQ
         Q = array([0.8,-0.8])
-        imshow(C,aspect='auto',interpolation='nearest',cmap='RdYlGn',extent=[MIN,MAX,MIN,MAX])#,levels = levels*0.000001,cmap='Greys')
+        imshow(flipud(C),aspect='auto',interpolation='nearest',cmap='RdYlGn',extent=[MIN,MAX,MIN,MAX])#,levels = levels*0.000001,cmap='Greys')
+	CIRCLE_POINTS = []
         for k in range(K):
-            plot([w[k,0]],[w[k,1]],'ok',ms=6)
+	    if(DO):
+                plot([w[k,0]],[w[k,1]],'ok',ms=6)
+	    else:
+                plot([w[k,0]],[w[k,1]],'ok',ms=4)
             if(V.r[k]>0):
                 theta  = linspace(-1,1,400)
                 POINTS = []
@@ -209,10 +220,11 @@ def plotPD(w,b,name='noname.png'):
                 POINTS = asarray(POINTS)
                 POINTS = concatenate([POINTS,flipud(POINTS[1:]),array([POINTS[0,0],POINTS[0,1]]).reshape((1,-1))],0)
                 POINTS[400:,1]*=-1
-                print POINTS
                 POINTS+= w[k].reshape((1,-1))
+		CIRCLE_POINTS.append(copy(POINTS[argsort(POINTS[:,0])]))
                 for a,ab in zip(POINTS[:-1],POINTS[1:]):
                     plot([a[0],ab[0]],[a[1],ab[1]],'k',alpha=0.8)
+	    if(DO):
                 DISTANCES = ((POINTS-Q.reshape((1,-1)))**2).sum(1)
                 print shape(w),shape(b)
                 POSI = argsort((DISTANCES-((w[k]-Q)**2).sum()+b[k])**2)
@@ -227,8 +239,21 @@ def plotPD(w,b,name='noname.png'):
                 plot([POINTS[POSI[2],0],w[k,0]],[POINTS[POSI[2],1],w[k,1]],color='k',linestyle='dashed')
         xticks([])
         yticks([])
-        plot([Q[0]],[Q[1]],'xb',ms=14)
-        plot([Q[0]],[Q[1]],'ob',ms=6)
+	if(DO):
+            plot([Q[0]],[Q[1]],'xb',ms=14)
+            plot([Q[0]],[Q[1]],'ob',ms=6)
+	else:
+	    for i in xrange(K):
+		for j in xrange(i+1,K):
+		    INDEX1,CLOSEST1 = find_closest(CIRCLE_POINTS[i],CIRCLE_POINTS[j])
+		    CIRCLE_POINTS[i][INDEX1[0]]+=100
+                    INDEX2,CLOSEST2 = find_closest(CIRCLE_POINTS[i],CIRCLE_POINTS[j])
+		    CIRCLE_POINTS[i][INDEX1[0]]-=100
+		    director = (CLOSEST1[1]-CLOSEST2[1])/(CLOSEST1[0]-CLOSEST2[0]+0.0000000000000000001)
+		    bias     = CLOSEST1[1]-CLOSEST1[0]*director
+		    print director,bias,CLOSEST1,CLOSEST2
+	            plot([MIN,MAX],[MIN*director+bias,MAX*director+bias],color='r',linestyle='dotted',ms=6,lw=4)
+	ylim([MIN,MAX])
         tight_layout()
         if(name is not None):
                 savefig(name)
@@ -450,10 +475,20 @@ BB = asarray(BB)
 
 #####################################################
 # PLOT POWER DIAGRAM
-W = array([[-1.8,-1.8],[1.2,1.2],[-1.5,1.2]])#randn(3,2)*1.3
-B = 0.5+rand(3)/2
+W = array([[-1.8,-1.8],[1.2,1.2],[-1.5,1.2]])/2#randn(3,2)*1.3
+B = 0.1+rand(3)/3
+B[0]*=2.2
 
 figure(figsize=(4,4))#,dpi=20)
-plotPD(W,B,'PD_random.png')
+plotPD(W,B,'PD_random_1.png')
 close()
+
+
+B+=1.1
+figure(figsize=(4,4))#,dpi=20)
+plotPD(W,B,'PD_random_2.png',DO=False)
+close()
+
+
+
 

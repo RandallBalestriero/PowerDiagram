@@ -5,6 +5,56 @@ import glob
 from sklearn.datasets import fetch_mldata
 from sklearn.cross_validation import train_test_split
 
+
+#######
+#
+#       Utilities to display input space partitioning
+#
+#
+
+
+
+def grad(x):
+    #compute each directional (one step) derivative as a boolean mask
+    #representing jump from one region to another and add them (boolean still)
+    g_vertical   = greater(pad(abs(x[1:]-x[:-1]),[[1,0],[0,0]],'constant'),0)
+    g_horizontal = greater(pad(abs(x[:,1:]-x[:,:-1]),[[0,0],[1,0]],'constant'),0)
+    g_diagonaldo = greater(pad(abs(x[1:,1:]-x[:-1,:-1]),[[1,0],[1,0]],'constant'),0)
+    g_diagonalup = greater(pad(abs(x[:-1:,1:]-x[1:,:-1]),[[1,0],[1,0]],'constant'),0)
+    return (g_vertical+g_horizontal+g_diagonaldo+g_diagonalup)
+
+def states2values(states):
+    #get an array of binary values representing the relu 
+    #or absolute value etc state and thus is 1 if the relu
+    #was active and 0 otherwise and this for each unit
+    #so states is a 2D array of shape (#samples,#units)
+    #this has ot be applied for the states of each layer indpendently
+    state2values_dict = dict()
+    values            = zeros(states.shape[0])
+    for i in xrange(states.shape[0]):
+        str_s = str(states[i].astype('uint8'))
+        if(str_s not in state2values_dict.keys()):
+            state2values_dict[str_s] = randn()
+        values[i]=state2values_dict[str_s]
+    return values
+
+def get_input_space_partition(model,x_grid,y_grid):
+    x,y = meshgrid(x_grid,y_grid)
+    X   = concatenate([x.reshape((-1,1)),y.reshape((-1,1))],axis=1)
+    #the following should take as input a collection of points
+    #in the input space and return a list of binary states, each 
+    #element of the list is for 1 specific layer and it is a 2D array
+    states = model.get_states(X)
+    layer_partitioning = []
+    for layer in xrange(len(states)):
+        current_state = states[layer]
+        partitioning  = grad(states2values(current_state).reshape((len(x_grid),len(y_grid))))
+        layer_partitioning.append(partitioning)
+    return layer_partitioning
+
+
+
+
 ###################################################################
 #
 #
