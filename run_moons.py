@@ -74,7 +74,7 @@ x_grid = linspace(x_min,x_max,200)
 y_grid = linspace(x_min,x_max,200)
 layer_partitioning = get_input_space_partition(model1,x_grid,y_grid)
 for l in layer_partitioning:
-	figure(figsize=(5,4))
+	figure(figsize=(4,4))
 	imshow(flipud(l.astype('uint8')),interpolation='nearest',cmap='Greys',extent=[x_min,x_max,y_min,y_max],aspect='auto')
 
 x_train = x_train[::2]
@@ -90,7 +90,7 @@ tight_layout()
 savefig(OPT+'_partitioning_first.png')
 close()
 # GET LAST LAYER STATES
-figure(figsize=(5,4))
+figure(figsize=(4,4))
 predict = model1.predict(DD)
 imshow(flipud(predict.argmax(1).reshape((200,200))),extent=[x_min,x_max,y_min,y_max],interpolation='nearest',aspect='auto',cmap='RdYlGn')
 xticks([])

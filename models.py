@@ -288,7 +288,8 @@ class allCNN1:
 		# (7 20 20) : 2800
                 layers.append(ConvLayer(layers[-1],9,7,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
 		# (9 14 14) : 1764
-                layers.append(GlobalPoolLayer(layers[-1]))
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+		# 128
                 layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
                 self.layers = layers
                 return self.layers
@@ -310,7 +311,32 @@ class allCNN2:
 		# (9 24 24)  : 5184
                 layers.append(ConvLayer(layers[-1],15,5,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
 		# (15 20 20) : 6000
-                layers.append(GlobalPoolLayer(layers[-1]))
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+		# 128
+                layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
+                self.layers = layers
+                return self.layers
+
+
+
+class allCNN3:
+        def __init__(self,bn=1,n_classes=10,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.)):
+                self.bn          = bn
+                self.n_classes   = n_classes
+                self.layers      = 0
+                self.init_W      = init_W
+                self.init_b      = init_b
+                self.bias_option = bias_option
+        def get_layers(self,input_variable,input_shape,training):
+                layers = [InputLayer(input_shape,input_variable)]
+                layers.append(ConvLayer(layers[-1],12,5,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
+		# (9 28 28)  : 9408
+                layers.append(ConvLayer(layers[-1],15,3,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
+		# (15 26 26)  : 10140
+                layers.append(ConvLayer(layers[-1],19,3,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
+		# (19 24 24) : 10944
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+		# 128
                 layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
                 self.layers = layers
                 return self.layers
@@ -330,6 +356,7 @@ class allDENSE1:
                 layers.append(DenseLayer(layers[-1],3380,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
                 layers.append(DenseLayer(layers[-1],2800,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(DenseLayer(layers[-1],1764,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
                 self.layers = layers
                 return self.layers
@@ -347,12 +374,29 @@ class allDENSE2:
                 layers.append(DenseLayer(layers[-1],5488,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
                 layers.append(DenseLayer(layers[-1],5184,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(DenseLayer(layers[-1],6000,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
                 layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
                 self.layers = layers
                 return self.layers
 
 
-
+class allDENSE3:
+        def __init__(self,bn=1,n_classes=10,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.)):
+                self.bn          = bn
+                self.n_classes   = n_classes
+                self.layers      = 0
+                self.init_W      = init_W
+                self.init_b      = init_b
+                self.bias_option = bias_option
+        def get_layers(self,input_variable,input_shape,training):
+                layers = [InputLayer(input_shape,input_variable)]
+                layers.append(DenseLayer(layers[-1],9408,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
+                layers.append(DenseLayer(layers[-1],10140,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],10944,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
+                self.layers = layers
+                return self.layers
 
 
 
