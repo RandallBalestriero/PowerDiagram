@@ -12,8 +12,8 @@ import os
 
 SAVE_DIR = os.environ['SAVE_DIR']
 
-models       = [allDENSE3,allCNN3]
-models_names = ['allDENSE3','allCNN3']
+models       = [allDENSE1,allCNN1]
+models_names = ['allDENSE1','allCNN1']
 
 init_ws       = [tf.contrib.layers.xavier_initializer(uniform=False)]
 init_ws_names = ['XavierNormal']
