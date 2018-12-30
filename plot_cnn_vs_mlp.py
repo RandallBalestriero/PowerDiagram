@@ -43,7 +43,7 @@ def get_stat(name):
 
 
 lrs = ['0.001','0.0005','0.0001']
-models = ['allCNN1','allDENSE1','allCNN2','allDENSE2']
+models = ['allCNN1','allDENSE1','allCNN2','allDENSE2','allCNN3','allDENSE3']
 DATASET = ['FASHION','SVHN','CIFAR','CIFAR100']
 
 
@@ -54,11 +54,11 @@ STDS_TEST  = []
 
 for _ in [0]:
 	for lr in lrs:
-		MEAN_TRAIN = [[] for i in xrange(4)]
-		STD_TRAIN  = [[] for i in xrange(4)]
-                MEAN_TEST = [[] for i in xrange(4)]
-                STD_TEST  = [[] for i in xrange(4)]
-                for model,model_nb in zip(models,xrange(4)):
+		MEAN_TRAIN = [[] for i in xrange(len(models))]
+		STD_TRAIN  = [[] for i in xrange(len(models))]
+                MEAN_TEST = [[] for i in xrange(len(models))]
+                STD_TEST  = [[] for i in xrange(len(models))]
+                for model,model_nb in zip(models,xrange(len(models))):
 			for dataset in DATASET:
 				name  = SAVE_DIR+'VORONOI/cnnvsmlp_'+dataset+'_'+model+'_lr'+lr+'_run*.pkl'
 				train_loss,test_accu,train_accu = get_stat(name)
@@ -107,8 +107,21 @@ tight_layout()
 savefig('cnn_vs_mlp_2.png')
 close()
 
-MEAN  = zeros((4,4))
-STD   = zeros((4,4))
+figure(figsize=(8,2))
+for dataset_nb in xrange(4):
+        subplot(1,4,1+dataset_nb)
+        plot(MEANS_TRAIN_[ARG[4,dataset_nb],4,dataset_nb],color='b',lw=3)
+        plot(MEANS_TRAIN_[ARG[5,dataset_nb],5,dataset_nb],color='k',lw=3)
+        ylim([0.1,1])
+tight_layout()
+savefig('cnn_vs_mlp_3.png')
+close()
+
+
+
+
+MEAN  = zeros((len(models),4))
+STD   = zeros((len(models),4))
 for i in xrange(4):
 	for j in xrange(4):
 		MEAN[i,j]=MEANS[ARG[i,j],i,j]
