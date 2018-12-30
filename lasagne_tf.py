@@ -103,6 +103,9 @@ class DenseLayer:
             self.b = tf.Variable(init_b((1,n_output)),name='b_dense',trainable=True)
 	elif(bias_option=='constrained'):
 	    self.b = -tf.reduce_sum(tf.square(self.W),axis=0,keep_dims=True)*0.5
+	elif(bias_option=='explicit'):
+	    self.radius = tf.Variable(init_b((1,n_output)),name='b_dense',trainable=True)
+            self.b = -tf.reduce_sum(tf.square(self.W),axis=0,keep_dims=True)*0.5+tf.abs(self.radius)
 	else:
             self.b = tf.zeros((1,n_output))
 	output = tf.matmul(renorm_input,self.W)+self.b
@@ -118,6 +121,11 @@ class DenseLayer:
         else:	self.output = output
 	reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
 	self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1])
+
+
+
+
+
 
 class ConvLayer:
     def __init__(self,incoming,n_filters,filter_shape,bias_option='unconstrained',training=None,bn=True,init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.),pad='VALID',first=False,nonlinearity='relu'):
@@ -140,6 +148,9 @@ class ConvLayer:
 	    self.b = tf.Variable(init_b((1,1,1,n_filters)),name='b_conv',trainable=True)
         elif(bias_option=='constrained'):
             self.b = -tf.reduce_sum(tf.square(self.W),axis=[0,1,2],keepdims=True)*0.5
+	elif(bias_option=='explicit'):
+	    self.radius = tf.Variable(init_b((1,1,1,n_filters)),name='b_conv',trainable=True)
+            self.b = -tf.reduce_sum(tf.square(self.W),axis=[0,1,2],keepdims=True)*0.5+tf.abs(self.radius)
         else:
             self.b = tf.zeros((1,1,1,n_filters))
 	output     = tf.nn.conv2d(padded_input,self.W,strides=[1,1,1,1],padding='VALID')+self.b

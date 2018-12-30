@@ -11,8 +11,10 @@ execfile('lasagne_tf.py')
 import os
 SAVE_DIR = os.environ['SAVE_DIR']
 
-models       = [smallCNN,largeCNN]
-models_names = ['SmallCNN','LargeCNN'] 
+#models       = [smallCNN,largeCNN]
+#models_names = ['SmallCNN','LargeCNN'] 
+models       = [smallDENSE,largeDENSE]
+models_names = ['SmallDENSE','LargeDENSE'] 
 
 init_ws       = [tf.uniform_unit_scaling_initializer(),tf.contrib.layers.xavier_initializer(uniform=True),tf.contrib.layers.xavier_initializer(uniform=False)]
 init_ws_names = ['UniformUnitScaling','XavierUniform','XavierNormal']

@@ -272,6 +272,75 @@ class smallCNN:
 
 
 
+
+
+
+
+
+
+
+
+
+
+class smallDENSE:
+        def __init__(self,bn=1,n_classes=10,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.)):
+                self.bn          = bn
+                self.n_classes   = n_classes
+                self.layers      = 0
+                self.init_W      = init_W
+                self.init_b      = init_b
+                self.bias_option = bias_option
+        def get_layers(self,input_variable,input_shape,training):
+                layers = [InputLayer(input_shape,input_variable)]
+                layers.append(DenseLayer(layers[-1],1024,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
+                layers.append(DenseLayer(layers[-1],1024,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],128,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
+                self.layers = layers
+                return self.layers
+
+
+class largeDENSE:
+        def __init__(self,bn=1,n_classes=10,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.)):
+                self.bn          = bn
+                self.n_classes   = n_classes
+                self.layers      = 0
+                self.init_W      = init_W
+                self.init_b      = init_b
+                self.bias_option = bias_option
+        def get_layers(self,input_variable,input_shape,training):
+                layers = [InputLayer(input_shape,input_variable)]
+                layers.append(DenseLayer(layers[-1],4096,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,first=True))
+                layers.append(DenseLayer(layers[-1],4096,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],256,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option))
+                layers.append(DenseLayer(layers[-1],self.n_classes,training=training,bn=self.bn,init_W=self.init_W,init_b=self.init_b,bias_option=self.bias_option,nonlinearity=False))
+                self.layers = layers
+                return self.layers
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class allCNN1:
         def __init__(self,bn=1,n_classes=10,bias_option='unconstrained',init_W = tf.contrib.layers.xavier_initializer(uniform=True),init_b = tf.constant_initializer(0.)):
                 self.bn          = bn
