@@ -8,7 +8,7 @@
 #screen -dmS H bash -c "sleep 1;export CUDA_VISIBLE_DEVICES='4';python run_bias_constraint.py 0 0 explicit SVHN";
 
 
-##### TO DO : zero constrained unconstrained 
+##### TO DO : constrained unconstrained 
 
 screen -dmS AA bash -c "sleep 1;export CUDA_VISIBLE_DEVICES='4';python run_bias_constraint.py 0 1 explicit CIFAR";
 screen -dmS BB bash -c "sleep 1;export CUDA_VISIBLE_DEVICES='4';python run_bias_constraint.py 0 0 explicit CIFAR";
