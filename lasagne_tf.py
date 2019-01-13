@@ -121,7 +121,7 @@ class DenseLayer:
                 self.state  = tf.greater(output,0)
                 self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
         else:	self.output = output
-	self.distance_loss       = tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),0,keepdims=True)+0.0001),1)
+	self.distance_loss       = tf.reduce_min(2*tf.log(tf.abs(output)+0.0001)-tf.log(tf.reduce_sum(tf.square(self.W),[0],keepdims=True)+0.0001),3)#tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),0,keepdims=True)+0.0001),1)
 	reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
 	self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1])
 
@@ -167,7 +167,7 @@ class ConvLayer:
                 self.state  = tf.greater(output,0)
                 self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
 	else:	self.output = output
-        self.distance_loss       = tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.0001),3)
+        self.distance_loss       = tf.reduce_min(2*tf.log(tf.abs(output)+0.0001)-tf.log(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.0001),3)#tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.0001),3)
         reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
         self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1,2,3])
 
