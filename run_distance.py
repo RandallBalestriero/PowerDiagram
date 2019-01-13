@@ -35,9 +35,9 @@ for k in xrange(10):
         for init,init_name in zip(init_ws,init_ws_names):
 	    for alpha in [0.0000001,0.00001,0.001]:
                 if(batch_norm):
-	            name   = 'VORONOI/distance_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_init'+init_name+'_'+bias_constraint+'_run'+str(k)
+	            name   = 'VORONOI/distance_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_alpha'+str(alpha)+'_'+bias_constraint+'_run'+str(k)
 	    	else:
-		    name   = 'VORONOI/distance_nob_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_init'+init_name+'_'+bias_constraint+'_run'+str(k)
+		    name   = 'VORONOI/distance_nob_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_alpha'+str(alpha)+'_'+bias_constraint+'_run'+str(k)
 	    	x_train,y_train,x_test,y_test,input_shape,c=load_data(DATASET,batch_size=batch_size)
 ####
 	    	m      = model(bn=batch_norm,bias_option=bias_constraint,init_W=init,n_classes=c)
