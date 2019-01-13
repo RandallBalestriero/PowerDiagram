@@ -47,6 +47,7 @@ for init in inits:
 	for lr in lrs:
 		MEAN = [[] for i in xrange(8)]
 		STD  = [[] for i in xrange(8)]
+		print ' '
 		for dataset in DATASET:
 			for model in models:
 	
@@ -54,6 +55,7 @@ for init in inits:
 				train_loss,test_accu,train_accu = get_stat(name)
 				MEAN[0].append(mean(test_accu[:,-1]))
 				STD[0].append(std(test_accu[:,-1]))
+				print MEAN[0][-1],
 	
 				name  = SAVE_DIR+'VORONOI/bias_constraint_'+dataset+'_'+model+'_lr'+lr+'_init'+init+'_constrained_run*.pkl'
 				train_loss,test_accu,train_accu = get_stat(name)

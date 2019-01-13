@@ -12,8 +12,8 @@ import os
 
 SAVE_DIR = os.environ['SAVE_DIR']
 
-models       = [allDENSE1,allCNN1]
-models_names = ['allDENSE1','allCNN1']
+models       = [allDENSE1,allDENSE2,allDENSE3,allCNN1,allCNN2,allCNN3]
+models_names = ['allDENSE1','allDENSE2','allDENSE3','allCNN1','allCNN2','allCNN3']
 
 init_ws       = [tf.contrib.layers.xavier_initializer(uniform=False)]
 init_ws_names = ['XavierNormal']
@@ -22,14 +22,14 @@ lrs           = [0.001,0.0005,0.0001]
 DATASET       = sys.argv[-1]
 
 batch_norm    = True
-ne            = 150
+ne            = 200
 batch_size    = 50
 
 
 for k in xrange(10):
     for lr in lrs:
         for init,init_name in zip(init_ws,init_ws_names):
-	    for model,model_name in zip(models[::-1],models_names):
+	    for model,model_name in zip(models,models_names):
 	        name   = 'VORONOI/cnnvsmlp_'+DATASET+'_'+model_name+'_lr'+str(lr)+'_run'+str(k)
 	        x_train,y_train,x_test,y_test,input_shape,c=load_data(DATASET,batch_size=batch_size)
 ####

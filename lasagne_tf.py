@@ -36,6 +36,7 @@ class Pool2DLayer:
     def __init__(self,incoming,window,pool_type='MAX'):
         self.output_shape = (incoming.output_shape[0],incoming.output_shape[1]/window,incoming.output_shape[2]/window,incoming.output_shape[3])
 	self.output = tf.nn.pool(incoming.output,(window,window),pool_type,padding='VALID',strides=(window,window))
+        self.distance_loss       = float32(0)
         self.reconstruction_loss = float32(0)
 
 
@@ -95,6 +96,7 @@ class DenseLayer:
 	else:                             reshape_input = incoming.output
         in_dim = prod(incoming.output_shape[1:])
         self.W = tf.Variable(init_W((in_dim,n_output)),name='W_dense',trainable=True)
+	print (in_dim,n_output)
 	self.output_shape = (incoming.output_shape[0],n_output)
 	print reshape_input
 	if(first==False):    renorm_input = tf.layers.batch_normalization(reshape_input,training=training,center=bn)
@@ -119,6 +121,7 @@ class DenseLayer:
                 self.state  = tf.greater(output,0)
                 self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
         else:	self.output = output
+	self.distance_loss       = tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),0,keepdims=True)+0.0001),1)
 	reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
 	self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1])
 
@@ -164,6 +167,7 @@ class ConvLayer:
                 self.state  = tf.greater(output,0)
                 self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
 	else:	self.output = output
+        self.distance_loss       = tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.0001),3)
         reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
         self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1,2,3])
 
@@ -174,7 +178,7 @@ class GlobalPoolLayer:
         self.output = tf.reduce_mean(incoming.output,[1,2],keep_dims=True)
         self.output_shape = [incoming.output_shape[0],1,1,incoming.output_shape[3]]
 	self.reconstruction_loss = float32(0)
-
+        self.distance_loss       = float32(0)
 
 
 
