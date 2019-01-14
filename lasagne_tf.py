@@ -36,7 +36,7 @@ class Pool2DLayer:
     def __init__(self,incoming,window,pool_type='MAX'):
         self.output_shape = (incoming.output_shape[0],incoming.output_shape[1]/window,incoming.output_shape[2]/window,incoming.output_shape[3])
 	self.output = tf.nn.pool(incoming.output,(window,window),pool_type,padding='VALID',strides=(window,window))
-        self.distance_loss       = float32(0)
+        self.distance_loss       = None
         self.reconstruction_loss = float32(0)
 
 
@@ -110,7 +110,7 @@ class DenseLayer:
             self.b = -tf.reduce_sum(tf.square(self.W),axis=0,keep_dims=True)*0.5+tf.abs(self.radius)
 	else:
             self.b = tf.zeros((1,n_output))
-	output = tf.matmul(renorm_input,self.W)+self.b
+        output = (tf.matmul(renorm_input,self.W)+self.b)
         if(nonlinearity=='relu'):
 		self.state  = tf.greater(output,0)
 		self.output = tf.cast(self.state,tf.float32)*output
@@ -121,7 +121,7 @@ class DenseLayer:
                 self.state  = tf.greater(output,0)
                 self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
         else:	self.output = output
-	self.distance_loss       = tf.reduce_min(2*tf.log(tf.abs(output)+0.0001)-tf.log(tf.reduce_sum(tf.square(self.W),[0],keepdims=True)+0.0001),3)#tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),0,keepdims=True)+0.0001),1)
+	self.distance_loss       = tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),0,keepdims=True)+0.000001),1)
 	reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
 	self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1])
 
@@ -156,7 +156,7 @@ class ConvLayer:
             self.b = -tf.reduce_sum(tf.square(self.W),axis=[0,1,2],keepdims=True)*0.5+tf.abs(self.radius)
         else:
             self.b = tf.zeros((1,1,1,n_filters))
-	output     = tf.nn.conv2d(padded_input,self.W,strides=[1,1,1,1],padding='VALID')+self.b
+	output     = (tf.nn.conv2d(padded_input,self.W,strides=[1,1,1,1],padding='VALID')+self.b)
 	if(nonlinearity=='relu'):
 		self.state  = tf.greater(output,0)
 		self.output = tf.cast(self.state,tf.float32)*output
@@ -167,7 +167,7 @@ class ConvLayer:
                 self.state  = tf.greater(output,0)
                 self.output = tf.cast(self.state,tf.float32)*output-(1-tf.cast(self.state,tf.float32))*output
 	else:	self.output = output
-        self.distance_loss       = tf.reduce_min(2*tf.log(tf.abs(output)+0.0001)-tf.log(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.0001),3)#tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.0001),3)
+        self.distance_loss       = tf.reduce_min(tf.abs(output)/tf.sqrt(tf.reduce_sum(tf.square(self.W),[0,1,2],keepdims=True)+0.00001),[1,2,3])
         reconstruction           = tf.gradients(self.output,renorm_input,self.output)[0]
         self.reconstruction_loss = cosine_distance(reconstruction,renorm_input,axis=[1,2,3])
 
@@ -177,8 +177,8 @@ class GlobalPoolLayer:
     def __init__(self,incoming,pool_type='AVG',global_beta=1):
         self.output = tf.reduce_mean(incoming.output,[1,2],keep_dims=True)
         self.output_shape = [incoming.output_shape[0],1,1,incoming.output_shape[3]]
-	self.reconstruction_loss = float32(0)
-        self.distance_loss       = float32(0)
+	self.reconstruction_loss = None
+        self.distance_loss       = None
 
 
 

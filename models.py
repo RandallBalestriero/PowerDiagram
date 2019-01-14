@@ -29,8 +29,8 @@ class DNNClassifier(object):
 			# TRAINING LOSS AND UPDATES
 	                training_opt             = optimizer(self.lr)
                         self.crossentropy_loss   = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=self.y_, logits=self.prediction, name='cross_entropy'))
-			self.all_distance_loss   = [tf.reduce_sum(l.distance_loss)/input_shape[0] for l in self.layers[1:-1]]
-			self.distance_loss       = -tf.add_n(self.all_distance_loss)/(len(self.layers)-1)
+			self.all_distance_loss   = tf.stack([l.distance_loss for l in self.layers[1:] if l.distance_loss is not None],0)
+			self.distance_loss       = -tf.reduce_sum(self.all_distance_loss)/input_shape[0]
 			if(distance_coeff>0):
 				self.training_loss = self.crossentropy_loss+distance_coeff*self.distance_loss
 			else:
@@ -56,10 +56,10 @@ class DNNClassifier(object):
                         self.session.run(self.training_updates,feed_dict={self.x:X[here],self.y_:y[here],self.training:True,self.learning_rate:float32(self.lr)})
 			# GET TRAIN LOSS
 			if(I%update_time==0):
-				if(self.distance_coeff>0):
+				if(self.distance_coeff==0):
                                 	train_loss.append(self.session.run(self.crossentropy_loss,feed_dict={self.x:X[here],self.y_:y[here],self.training:False}))
 				else:
-                                        train_loss.append(self.session.run([self.crossentropy_loss,self.reconstruction_loss],feed_dict={self.x:X[here],self.y_:y[here],self.training:False}))
+                                        train_loss.append(self.session.run([self.crossentropy_loss,self.distance_loss],feed_dict={self.x:X[here],self.y_:y[here],self.training:False}))
                                 print I,n_train,train_loss[-1]
         	return train_loss
         def fit(self,X,y,X_test,y_test,n_epochs=5):
