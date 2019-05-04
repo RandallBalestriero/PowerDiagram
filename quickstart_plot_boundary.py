@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, "../")
+sys.path.insert(0, "../Sknet")
 
 import sknet
 from sknet.optimize import Adam
@@ -93,11 +93,13 @@ fig = plt.figure(figsize=(6,9))
 #
 mask1   = output.data[0][:,:6]>0
 boundary1 = sknet.utils.geometry.get_input_space_partition(mask1,N,N,1).astype('bool')
-boundary10 = sknet.utils.geometry.get_input_space_partition(mask1[:,2],N,N,1).astype('bool')
+boundary10 = [sknet.utils.geometry.get_input_space_partition(mask1[:,k],N,N,1).astype('bool')
+                    for k in range(6)]
 
 mask2   = output.data[0][:,6:12]>0
 boundary2 = sknet.utils.geometry.get_input_space_partition(mask2,N,N,1).astype('bool')
-boundary20 = sknet.utils.geometry.get_input_space_partition(mask2[:,2],N,N,1).astype('bool')
+boundary20 = [sknet.utils.geometry.get_input_space_partition(mask2[:,k],N,N,1).astype('bool')
+                    for k in range(6)]
 boundary12=boundary1+boundary2
 
 mask3   = output.data[0][:,-1]>0
@@ -106,9 +108,9 @@ boundary123=boundary12+boundary3
 
 
 boundary1   = boundary1.astype('float32')
-boundary10  = boundary10.astype('float32')
+boundary10  = [b.astype('float32') for b in boundary10]
 boundary2   = boundary2.astype('float32')
-boundary20  = boundary20.astype('float32')
+boundary20  = [b.astype('float32') for b in boundary20]
 boundary3   = boundary3.astype('float32')
 boundary12  = boundary12.astype('float32')
 boundary123 = boundary123.astype('float32')
@@ -139,7 +141,7 @@ def plotit(poly,previous,b1,b2,name,last=False):
         spine.set_visible(False)
     plt.tight_layout(1)
     ax.dist=9
-    plt.savefig(name+'1.png', bbox_inches='tight')
+    plt.savefig(name+'1.pdf', bbox_inches='tight')
     plt.close()
 
     fig = plt.figure(figsize=(5,5))
@@ -172,7 +174,6 @@ def plotit(poly,previous,b1,b2,name,last=False):
     B0  = np.where(WHERE[0]>=(N-2))[0]
     A1  = np.where(WHERE[1]<=2)[0]
     B1  = np.where(WHERE[1]>=(N-2))[0]
-    print(WHERE[0].min(),WHERE[0].max(),WHERE[1].min(),WHERE[1].max())
     POINTS = list()
     if len(A0)>0:
         POINTS.append(A0[0])
@@ -201,14 +202,15 @@ def plotit(poly,previous,b1,b2,name,last=False):
     for spine in ax.spines.values():
         spine.set_visible(False)
     ax.dist=7
-    plt.savefig(name+'2.png', bbox_inches='tight')
+    plt.savefig(name+'2.pdf', bbox_inches='tight')
     plt.close()
 
     #
 
-
-plotit(poly1,0.,boundary1,boundary10,'layer1')
-plotit(poly12,boundary12,boundary2,boundary20,'layer2')
+for ii,b in enumerate(boundary10):
+    plotit(poly1,0.,boundary1,b,'layer1_'+str(ii))
+for ii,b in enumerate(boundary20):
+    plotit(poly12,boundary12,boundary2,b,'layer2_'+str(ii))
 plotit(poly123,boundary123,boundary3,boundary3,'layer3',last=True)
 
 

@@ -87,8 +87,8 @@ ax  = fig.add_subplot(111,projection='3d')
 ax.contourf(X[:,0].reshape((N,N)), X[:,1].reshape((N,N)),
                  boundary,3, zdir='z', offset=0.4,cmap='Greys')
 
-ax.text(W[0,0]+0.2,W[0,1],0.4,r'$[\mu]_{k,.}$')
-ax.text(W[0,0],W[0,1],0.6+b[0]**2,r'$([\mu]_{k,.},[{\rm rad}]_k)$',
+ax.text(W[0,0]+0.2,W[0,1],0.4,r'$[\mu]_{k,.}$', fontsize=15)
+ax.text(W[0,0],W[0,1],0.41+b[0]**2,r'$([\mu]_{k,.},[{\rm rad}]_k)$',fontsize=15,
                 horizontalalignment='center')
 
 for w,b_ in zip(W,b**2):
