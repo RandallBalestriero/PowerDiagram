@@ -2,49 +2,69 @@ import sys
 sys.path.insert(0, "../Sknet")
 
 import sknet
-from sknet.optimize import Adam
-from sknet.optimize.loss import *
-from sknet.optimize import schedule
 import os
 
 # Make Tensorflow quiet.
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import numpy as np
-import pylab as pl
-import time
 import tensorflow as tf
 from sknet.dataset import BatchIterator
-from sknet import ops,layers
+from sknet import ops
 
+import argparse import parser
 import h5py
 
 
 # Data Loading
 #-------------
-dataset = sknet.dataset.load_cifar10()
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--dataset", help="dataset to use", type=str)
+parser.add_argument("--model", help="modeul to use 'cnn' or 'resnet'",type=str)
+parser.add_argument("--data_augmentation", help="using data augmentation",
+                                      type=str2bool)
+
+args              = parser.parse_args()
+DATASET           = args.dataset
+MODEL             = args.model
+DATA_AUGMENTATION = args.data_augmentation
+
+if MODEL=='cifar10':
+    dataset = sknet.dataset.load_cifar10()
+elif MODEL=='svhn':
+    dataset = sknet.dataset.load_svhn()
+elif MODEL=='mnist':
+    dataset = sknet.dataset.load_mnist()
+elif MODEL=='cifar100':
+    dataset = sknet.dataset.load_cifar100()
 
 dataset.preprocess(sknet.dataset.Standardize,data="images",axis=[0])
 
 dataset.create_placeholders(batch_size=64,
         iterators_dict={'train_set':BatchIterator("random_see_all"),
-                        'valid_set':BatchIterator('continuous'),
-                        'test_set':BatchIterator('continuous')},device="/cpu:0")
+                       'valid_set':BatchIterator('continuous'),
+                       'test_set':BatchIterator('continuous')},device="/cpu:0")
 
 # Create Network
 #---------------
 
-# we use a batch_size of 64 and use the dataset.datum shape to
-# obtain the shape of 1 observation and create the input shape
-
 dnn       = sknet.network.Network(name='simple_model')
 
-dnn.append(ops.RandomAxisReverse(dataset.images,axis=[-1]))
-dnn.append(ops.RandomCrop(dnn[-1],(28,28)))
-dnn.append(ops.GaussianNoise(dnn[-1],noise_type='additive',sigma=0.005))
+if DATA_AUGMENTATION:
+    dnn.append(ops.RandomAxisReverse(dataset.images,axis=[-1]))
+    dnn.append(ops.RandomCrop(dnn[-1],(28,28)))
 
-dnn = sknet.network.Resnet(dnn,dataset.n_classes,D=2,W=2)
+if MODEL=='resnet':
+    sknet.networks.Resnet(dnn,dataset.n_classes,D=2,W=1)
+else:
+    sknet.networks.LargeConv(dnn,dataset.n_classes)
+
 prediction = dnn[-1]
+
+
+
+
 
 all_layers = [layer for layer in dnn[3:-1] if type(layer)==sknet.ops.Merge]
 mus  = [tf.gradients(layer,dnn[2],layer)[0] for layer in all_layers]
