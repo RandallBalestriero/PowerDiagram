@@ -16,15 +16,13 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', help="the dataset to train on, can be"\
            +"mnist, fasionmnist, cifar10, ...",type=str, default='mnist')
-parser.add_argument('--model', help="the model to use: cnn or resnet",
-                      type=str,choices=['cnn','resnet'], default='cnn')
 parser.add_argument("--data_augmentation", help="using data augmentation",
                      type=sknet.utils.str2bool,default='0')
 
 args              = parser.parse_args()
 DATASET           = args.dataset
-MODEL             = args.model
 DATA_AUGMENTATION = args.data_augmentation
+
 # Data Loading
 #-------------
 if DATASET=='mnist':
@@ -54,6 +52,24 @@ dataset.create_placeholders(batch_size=32,
                         'valid_set':BatchIterator('continuous'),
                         'test_set':BatchIterator('continuous')},device="/cpu:0")
 
+# Utility function
+#-----------------
+
+#c_p = tf.placeholder(tf.int32)
+i_p = tf.placeholder(tf.int32)
+j_p = tf.placeholder(tf.int32)
+
+def get_distance(input,tensor):
+    def doit(c):
+        gradient = tf.gradients(tensor[:,c,i_p,j_p],input)[0]
+        norm     = tf.sqrt(tf.reduce_sum(tf.square(gradient),[1,2,3]))
+        return tf.abs(tensor[:,c,i_p,j_p])/norm
+    distances = tf.map_fn(doit,tf.range(tensor.shape.as_list()[1]),
+                                        dtype=tf.float32)
+    return tf.reduce_min(distances,0)
+
+
+
 # Create Network
 #---------------
 
@@ -62,18 +78,20 @@ dnn       = sknet.Network(name='simple_model')
 if DATA_AUGMENTATION:
     dnn.append(ops.RandomAxisReverse(dataset.images,axis=[-1]))
     dnn.append(ops.RandomCrop(dnn[-1],(28,28),seed=10))
+    start_op = 2
 else:
     dnn.append(dataset.images)
+    start_op = 1
 
-if MODEL=='cnn':
-    sknet.networks.ConvLarge(dnn,dataset.n_classes)
-elif MODEL=='resnet':
-    sknet.networks.Resnet(dnn,dataset.n_classes,D=4,W=1)
+sknet.networks.ConvSmall(dnn,dataset.n_classes)
 
 prediction = dnn[-1]
-VQs     = [op.VQ for op in dnn[1:-2] if op.VQ is not None]
-loss    = sknet.losses.crossentropy_logits(p=dataset.labels,q=prediction)
-accu    = sknet.losses.accuracy(dataset.labels,prediction)
+if DATA_AUGMENTATION:
+    distances  = [get_distance(dnn[1],op.inner_ops[1]) for op in dnn[2:-1]]
+else:
+    distances  = [get_distance(dnn[0],op.inner_ops[1]) for op in dnn[1:-1]]
+loss       = sknet.losses.crossentropy_logits(p=dataset.labels,q=prediction)
+accu       = sknet.losses.accuracy(dataset.labels,prediction)
 
 B         = dataset.N('train_set')//32
 lr        = sknet.schedules.PiecewiseConstant(0.002,
@@ -83,54 +101,66 @@ minimizer = tf.group(optimizer.updates+dnn.updates)
 
 # Pipeline
 #---------
-workplace = sknet.utils.Workplace(dnn,dataset=dataset)
-
-feed_dict = dict()
-accuracies= list()
-vqs_train = dict()
-vqs_test  = dict()
+workplace       = sknet.utils.Workplace(dnn,dataset=dataset)
+feed_dict       = dict()
+accuracies      = list()
+distances_train = dict()
+distances_test  = dict()
 
 for epoch in range(150):
-    vqs_train[str(epoch)] = [[] for i in range(len(VQs))]
-    vqs_test[str(epoch)]  = [[] for i in range(len(VQs))]
+    distances_train[str(epoch)] = [[] for i in range(len(distances))]
+    distances_test[str(epoch)]  = [[] for i in range(len(distances))]
 
     #--Train Set--
     dataset.set_set('train_set',session=workplace.session)
     feed_dict.update(dnn.deter_dict(True))
 
     # VQs
-    print('VQ train set')
-    mapping_dict = [dict() for i in range(len(VQs))]
-    while dataset.next(session=workplace.session):
-        vqs = workplace.session.run(VQs,feed_dict=feed_dict)
-        for i,vq in enumerate(vqs):
-#            print(np.shape(vqs[i]))
-            vqs_train[str(epoch)][i].append(sknet.utils.geometry.states2values(
-                                np.concatenate(vqs[:i+1],1),mapping_dict[i]))
-    for i in range(len(VQs)):
-         vqs_train[str(epoch)][i]=np.concatenate(vqs_train[str(epoch)][i])
-
+    print('distance train set')
+    for batch in range(30):
+        dataset.next(session=workplace.session)
+        for LAYER in range(len(distances)):
+            ii,jj=dnn[start_op+LAYER].shape.as_list()[2:]
+            feed_dict.update({i_p:0,j_p:0})
+            mini_distances = workplace.session.run(distances[LAYER],feed_dict)
+            for i in range(ii):
+                for j in range(jj):
+                    feed_dict.update({i_p:i,j_p:j})
+                    mini_distances = np.minimum(mini_distances,
+                          workplace.session.run(distances[LAYER],feed_dict))
+            distances_train[str(epoch)][LAYER].append(mini_distances)
+    for i in range(len(distances)):
+         distances_train[str(epoch)][i]=np.concatenate(
+                                            distances_train[str(epoch)][i])
+    dataset.reset()
     # Training
     print('training')
     feed_dict.update(dnn.deter_dict(False))
     while dataset.next(session=workplace.session):
-        workplace.session.run(minimizer,feed_dict=feed_dict)
+        workplace.session.run(minimizer, feed_dict=feed_dict)
 
     #--Test Set--
     dataset.set_set('test_set',session=workplace.session)
     feed_dict.update(dnn.deter_dict(True))
 
     # VQs
-    print('VQ test')
-    mapping_dict = [dict() for i in range(len(VQs))]
-    while dataset.next(session=workplace.session):
-        vqs = workplace.session.run(VQs,feed_dict=feed_dict)
-        for i,vq in enumerate(vqs):
-            vqs_test[str(epoch)][i].append(sknet.utils.geometry.states2values(
-                                np.concatenate(vqs[:i+1],1), mapping_dict[i]))
-    for i in range(len(VQs)):
-         vqs_test[str(epoch)][i] = np.concatenate(vqs_test[str(epoch)][i])
-
+    print('distances test')
+    for batch in range(32):
+        dataset.next(session=workplace.session)
+        for LAYER in range(len(distances)):
+            ii,jj=dnn[start_op+LAYER].shape.as_list()[2:]
+            feed_dict.update({i_p:0,j_p:0})
+            mini_distances = workplace.session.run(distances[LAYER],feed_dict)
+            for i in range(ii):
+                for j in range(jj):
+                    feed_dict.update({i_p:i,j_p:j})
+                    mini_distances = np.minimum(mini_distances,
+                          workplace.session.run(distances[LAYER],feed_dict))
+            distances_test[str(epoch)][LAYER].append(mini_distances)
+    for i in range(len(distances)):
+         distances_test[str(epoch)][i]=np.concatenate(
+                                            distances_test[str(epoch)][i])
+    dataset.reset()
     # Accuracy
     print('accuracy')
     feed_dict.update(dnn.deter_dict(True))
@@ -142,9 +172,9 @@ for epoch in range(150):
     accuracies.append(accuracy_out/batch)
     print(accuracies[-1]*100)
     
-    f=open('/mnt/drive1/rbalSpace/regions/save_test_{}_{}_{}.pkl'.format(MODEL,
+    f=open('/mnt/drive1/rbalSpace/distances/save_test_{}_{}.pkl'.format(
                                       DATASET,DATA_AUGMENTATION),'wb')
-    pickle.dump([vqs_train,vqs_test],f)
+    pickle.dump([distances_train,distances_test],f)
     f.close()
 
 
