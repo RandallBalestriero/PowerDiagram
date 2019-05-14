@@ -171,7 +171,7 @@ for epoch in range(150):
         batch+=1
     accuracies.append(accuracy_out/batch)
     print(accuracies[-1]*100)
-    
+ 
     f=open('/mnt/drive1/rbalSpace/distances/save_test_{}_{}.pkl'.format(
                                       DATASET,DATA_AUGMENTATION),'wb')
     pickle.dump([distances_train,distances_test],f)

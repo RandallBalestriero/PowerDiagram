@@ -12,6 +12,9 @@ import tensorflow as tf
 from sknet.dataset import BatchIterator
 from sknet import ops,layers
 import argparse
+from sknet.utils.geometry import states2values
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', help="the dataset to train on, can be"\
@@ -41,13 +44,13 @@ elif DATASET=='svhn':
 if "valid_set" not in dataset.sets:
     dataset.split_set("train_set","valid_set",0.15)
 
-standardize = sknet.dataset.Standardize().fit(dataset['images/train_set'])
-dataset['images/train_set'] = \
-                        standardize.transform(dataset['images/train_set'])
-dataset['images/test_set'] = \
-                        standardize.transform(dataset['images/test_set'])
-dataset['images/valid_set'] = \
-                        standardize.transform(dataset['images/valid_set'])
+#standardize = sknet.dataset.Standardize().fit(dataset['images/train_set'])
+#dataset['images/train_set'] = \
+#                        standardize.transform(dataset['images/train_set'])
+#dataset['images/test_set'] = \
+#                        standardize.transform(dataset['images/test_set'])
+#dataset['images/valid_set'] = \
+#                        standardize.transform(dataset['images/valid_set'])
 
 dataset.create_placeholders(batch_size=32,
         iterators_dict={'train_set':BatchIterator("random_see_all"),
@@ -99,16 +102,17 @@ for epoch in range(150):
     feed_dict.update(dnn.deter_dict(True))
 
     # VQs
-    print('VQ train set')
-    mapping_dict = [dict() for i in range(len(VQs))]
-    while dataset.next(session=workplace.session):
-        vqs = workplace.session.run(VQs,feed_dict=feed_dict)
-        for i,vq in enumerate(vqs):
-#            print(np.shape(vqs[i]))
-            vqs_train[str(epoch)][i].append(sknet.utils.geometry.states2values(
-                                np.concatenate(vqs[:i+1],1),mapping_dict[i]))
-    for i in range(len(VQs)):
-         vqs_train[str(epoch)][i]=np.concatenate(vqs_train[str(epoch)][i])
+    if epoch%20==0:
+        print('VQ train set')
+        mapping_dict = [dict() for i in range(len(VQs))]
+        while dataset.next(session=workplace.session):
+            vqs = workplace.session.run(VQs,feed_dict=feed_dict)
+            for i,vq in enumerate(vqs):
+                vqs_train[str(epoch)][i].append(states2values(
+                                  np.concatenate(vqs[:i+1],1),mapping_dict[i]))
+        for i in range(len(VQs)):
+             vqs_train[str(epoch)][i]=np.concatenate(vqs_train[str(epoch)][i])
+             print(len(np.unique(vqs_train[str(epoch)][i])))
 
     # Training
     print('training')
@@ -121,15 +125,16 @@ for epoch in range(150):
     feed_dict.update(dnn.deter_dict(True))
 
     # VQs
-    print('VQ test')
-    mapping_dict = [dict() for i in range(len(VQs))]
-    while dataset.next(session=workplace.session):
-        vqs = workplace.session.run(VQs,feed_dict=feed_dict)
-        for i,vq in enumerate(vqs):
-            vqs_test[str(epoch)][i].append(sknet.utils.geometry.states2values(
-                                np.concatenate(vqs[:i+1],1), mapping_dict[i]))
-    for i in range(len(VQs)):
-         vqs_test[str(epoch)][i] = np.concatenate(vqs_test[str(epoch)][i])
+    if epoch%20==0:
+        print('VQ test')
+        mapping_dict = [dict() for i in range(len(VQs))]
+        while dataset.next(session=workplace.session):
+            vqs = workplace.session.run(VQs,feed_dict=feed_dict)
+            for i,vq in enumerate(vqs):
+                vqs_test[str(epoch)][i].append(states2values(
+                                 np.concatenate(vqs[:i+1],1), mapping_dict[i]))
+        for i in range(len(VQs)):
+             vqs_test[str(epoch)][i] = np.concatenate(vqs_test[str(epoch)][i])
 
     # Accuracy
     print('accuracy')
@@ -141,7 +146,7 @@ for epoch in range(150):
         batch+=1
     accuracies.append(accuracy_out/batch)
     print(accuracies[-1]*100)
-    
+
     f=open('/mnt/drive1/rbalSpace/regions/save_test_{}_{}_{}.pkl'.format(MODEL,
                                       DATASET,DATA_AUGMENTATION),'wb')
     pickle.dump([vqs_train,vqs_test],f)
