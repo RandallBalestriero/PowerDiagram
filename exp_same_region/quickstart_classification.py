@@ -71,7 +71,7 @@ else:
 if MODEL=='cnn':
     sknet.networks.ConvLarge(dnn,dataset.n_classes)
 elif MODEL=='resnet':
-    sknet.networks.Resnet(dnn,dataset.n_classes,D=4,W=1)
+    sknet.networks.Resnet(dnn,dataset.n_classes,D=2,W=1)
 
 prediction = dnn[-1]
 VQs     = [op.VQ for op in dnn[1:-2] if op.VQ is not None]
@@ -79,7 +79,7 @@ loss    = sknet.losses.crossentropy_logits(p=dataset.labels,q=prediction)
 accu    = sknet.losses.accuracy(dataset.labels,prediction)
 
 B         = dataset.N('train_set')//32
-lr        = sknet.schedules.PiecewiseConstant(0.002,
+lr        = sknet.schedules.PiecewiseConstant(0.005,
                                     {100*B:0.002,200*B:0.001,250*B:0.0005})
 optimizer = sknet.optimizers.Adam(loss,lr,params=dnn.variables(trainable=True))
 minimizer = tf.group(optimizer.updates+dnn.updates)
@@ -104,15 +104,14 @@ for epoch in range(150):
     # VQs
     if epoch%20==0:
         print('VQ train set')
-        mapping_dict = [dict() for i in range(len(VQs))]
-        while dataset.next(session=workplace.session):
-            vqs = workplace.session.run(VQs,feed_dict=feed_dict)
-            for i,vq in enumerate(vqs):
-                vqs_train[str(epoch)][i].append(states2values(
-                                  np.concatenate(vqs[:i+1],1),mapping_dict[i]))
-        for i in range(len(VQs)):
-             vqs_train[str(epoch)][i]=np.concatenate(vqs_train[str(epoch)][i])
-             print(len(np.unique(vqs_train[str(epoch)][i])))
+        for l in range(len(VQs)):
+            mapping_dict = dict()
+            while dataset.next(session=workplace.session):
+                v_ = workplace.session.run(VQs[l],feed_dict=feed_dict)
+                vqs_train[str(epoch)][l].append(states2values(v_,mapping_dict))
+                print(l,len(np.unique(vqs_train[str(epoch)][l][-1])))
+            vqs_train[str(epoch)][l]=np.concatenate(vqs_train[str(epoch)][l])
+            print(len(np.unique(vqs_train[str(epoch)][l])))
 
     # Training
     print('training')
@@ -127,14 +126,13 @@ for epoch in range(150):
     # VQs
     if epoch%20==0:
         print('VQ test')
-        mapping_dict = [dict() for i in range(len(VQs))]
-        while dataset.next(session=workplace.session):
-            vqs = workplace.session.run(VQs,feed_dict=feed_dict)
-            for i,vq in enumerate(vqs):
-                vqs_test[str(epoch)][i].append(states2values(
-                                 np.concatenate(vqs[:i+1],1), mapping_dict[i]))
-        for i in range(len(VQs)):
-             vqs_test[str(epoch)][i] = np.concatenate(vqs_test[str(epoch)][i])
+        for l in range(len(VQs)):
+            mapping_dict = dict()
+            while dataset.next(session=workplace.session):
+                v_ = workplace.session.run(VQs[l],feed_dict=feed_dict)
+                vqs_test[str(epoch)][l].append(states2values(v_,mapping_dict))
+                print(len(np.unique(vqs_test[str(epoch)][l][-1])))
+            vqs_test[str(epoch)][l] = np.concatenate(vqs_test[str(epoch)][l])
 
     # Accuracy
     print('accuracy')

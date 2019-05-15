@@ -117,22 +117,23 @@ for epoch in range(150):
 
     # VQs
     print('distance train set')
-    for batch in range(30):
-        dataset.next(session=workplace.session)
-        for LAYER in range(len(distances)):
-            ii,jj=dnn[start_op+LAYER].shape.as_list()[2:]
-            feed_dict.update({i_p:0,j_p:0})
-            mini_distances = workplace.session.run(distances[LAYER],feed_dict)
-            for i in range(ii):
-                for j in range(jj):
-                    feed_dict.update({i_p:i,j_p:j})
-                    mini_distances = np.minimum(mini_distances,
-                          workplace.session.run(distances[LAYER],feed_dict))
-            distances_train[str(epoch)][LAYER].append(mini_distances)
-    for i in range(len(distances)):
-         distances_train[str(epoch)][i]=np.concatenate(
-                                            distances_train[str(epoch)][i])
-    dataset.reset()
+    if epoch%20==0:
+        for batch in range(300):
+            dataset.next(session=workplace.session)
+            for LAYER in range(len(distances)):
+                ii,jj=dnn[start_op+LAYER].shape.as_list()[2:]
+                feed_dict.update({i_p:0,j_p:0})
+                mini_distances=workplace.session.run(distances[LAYER],feed_dict)
+                for i in range(ii):
+                    for j in range(jj):
+                        feed_dict.update({i_p:i,j_p:j})
+                        mini_distances = np.minimum(mini_distances,
+                             workplace.session.run(distances[LAYER],feed_dict))
+                distances_train[str(epoch)][LAYER].append(mini_distances)
+        for i in range(len(distances)):
+             distances_train[str(epoch)][i]=np.concatenate(
+                                                distances_train[str(epoch)][i])
+        dataset.reset()
     # Training
     print('training')
     feed_dict.update(dnn.deter_dict(False))
@@ -145,22 +146,23 @@ for epoch in range(150):
 
     # VQs
     print('distances test')
-    for batch in range(32):
-        dataset.next(session=workplace.session)
-        for LAYER in range(len(distances)):
-            ii,jj=dnn[start_op+LAYER].shape.as_list()[2:]
-            feed_dict.update({i_p:0,j_p:0})
-            mini_distances = workplace.session.run(distances[LAYER],feed_dict)
-            for i in range(ii):
-                for j in range(jj):
-                    feed_dict.update({i_p:i,j_p:j})
-                    mini_distances = np.minimum(mini_distances,
-                          workplace.session.run(distances[LAYER],feed_dict))
-            distances_test[str(epoch)][LAYER].append(mini_distances)
-    for i in range(len(distances)):
-         distances_test[str(epoch)][i]=np.concatenate(
-                                            distances_test[str(epoch)][i])
-    dataset.reset()
+    if epoch%20==0:
+        for batch in range(132):
+            dataset.next(session=workplace.session)
+            for LAYER in range(len(distances)):
+                ii,jj=dnn[start_op+LAYER].shape.as_list()[2:]
+                feed_dict.update({i_p:0,j_p:0})
+                mini_distances=workplace.session.run(distances[LAYER],feed_dict)
+                for i in range(ii):
+                    for j in range(jj):
+                        feed_dict.update({i_p:i,j_p:j})
+                        mini_distances = np.minimum(mini_distances,
+                             workplace.session.run(distances[LAYER],feed_dict))
+                distances_test[str(epoch)][LAYER].append(mini_distances)
+        for i in range(len(distances)):
+             distances_test[str(epoch)][i]=np.concatenate(
+                                                distances_test[str(epoch)][i])
+        dataset.reset()
     # Accuracy
     print('accuracy')
     feed_dict.update(dnn.deter_dict(True))
@@ -171,10 +173,10 @@ for epoch in range(150):
         batch+=1
     accuracies.append(accuracy_out/batch)
     print(accuracies[-1]*100)
- 
-    f=open('/mnt/drive1/rbalSpace/distances/save_test_{}_{}.pkl'.format(
+
+    f=open('/mnt/drive1/rbalSpace/distances/save_test_v2_{}_{}.pkl'.format(
                                       DATASET,DATA_AUGMENTATION),'wb')
-    pickle.dump([distances_train,distances_test],f)
+    pickle.dump([distances_train,distances_test,accuracies],f)
     f.close()
 
 
