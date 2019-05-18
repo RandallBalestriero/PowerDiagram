@@ -108,8 +108,6 @@ distances_train = dict()
 distances_test  = dict()
 
 for epoch in range(150):
-    distances_train[str(epoch)] = [[] for i in range(len(distances))]
-    distances_test[str(epoch)]  = [[] for i in range(len(distances))]
 
     #--Train Set--
     dataset.set_set('train_set',session=workplace.session)
@@ -118,6 +116,7 @@ for epoch in range(150):
     # VQs
     print('distance train set')
     if epoch%20==0:
+        distances_train[str(epoch)] = [[] for i in range(len(distances))]
         for batch in range(300):
             dataset.next(session=workplace.session)
             for LAYER in range(len(distances)):
@@ -147,6 +146,7 @@ for epoch in range(150):
     # VQs
     print('distances test')
     if epoch%20==0:
+        distances_test[str(epoch)]  = [[] for i in range(len(distances))]
         for batch in range(132):
             dataset.next(session=workplace.session)
             for LAYER in range(len(distances)):

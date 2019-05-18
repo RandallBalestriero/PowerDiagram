@@ -1,0 +1,396 @@
+### MATPLOTLIBRC FORMAT
+
+# This is a sample matplotlib configuration file - you can find a copy
+# of it on your system in
+# site-packages/matplotlib/mpl-data/matplotlibrc.  If you edit it
+# there, please note that it will be overwritten in your next install.
+# If you want to keep a permanent local copy that will not be
+# overwritten, place it in the following location:
+# unix/linux:
+#     $HOME/.config/matplotlib/matplotlibrc or
+#     $XDG_CONFIG_HOME/matplotlib/matplotlibrc (if $XDG_CONFIG_HOME is set)
+# other platforms:
+#     $HOME/.matplotlib/matplotlibrc
+#
+# See http://matplotlib.org/users/customizing.html#the-matplotlibrc-file for
+# more details on the paths which are checked for the configuration file.
+#
+# This file is best viewed in a editor which supports python mode
+# syntax highlighting. Blank lines, or lines starting with a comment
+# symbol, are ignored, as are trailing comments.  Other lines must
+# have the format
+#    key : val # optional comment
+#
+# Colors: for the color values below, you can either use - a
+# matplotlib color string, such as r, k, or b - an rgb tuple, such as
+# (1.0, 0.5, 0.0) - a hex string, such as ff00ff - a scalar
+# grayscale intensity such as 0.75 - a legal html color name, e.g., red,
+# blue, darkslategray
+
+#### CONFIGURATION BEGINS HERE
+
+# The default backend; one of GTK GTKAgg GTKCairo GTK3Agg GTK3Cairo
+# MacOSX Qt4Agg Qt5Agg TkAgg WX WXAgg Agg Cairo GDK PS PDF SVG
+# Template.
+# You can also deploy your own backend outside of matplotlib by
+# referring to the module name (which must be in the PYTHONPATH) as
+# 'module://my_backend'.
+backend      : Agg
+
+# If you are using the Qt4Agg backend, you can choose here
+# to use the PyQt4 bindings or the newer PySide bindings to
+# the underlying Qt4 toolkit.
+#backend.qt4 : PyQt4        # PyQt4 | PySide
+
+# Note that this can be overridden by the environment variable
+# QT_API used by Enthought Tool Suite (ETS); valid values are
+# "pyqt" and "pyside".  The "pyqt" setting has the side effect of
+# forcing the use of Version 2 API for QString and QVariant.
+
+# The port to use for the web server in the WebAgg backend.
+# webagg.port : 8888
+
+# If webagg.port is unavailable, a number of other random ports will
+# be tried until one that is available is found.
+# webagg.port_retries : 50
+
+# When True, open the webbrowser to the plot that is shown
+# webagg.open_in_browser : True
+
+# When True, the figures rendered in the nbagg backend are created with
+# a transparent background.
+# nbagg.transparent : False
+
+# if you are running pyplot inside a GUI and your backend choice
+# conflicts, we will automatically try to find a compatible one for
+# you if backend_fallback is True
+#backend_fallback: True
+
+interactive  : False
+#toolbar      : toolbar2   # None | toolbar2  ("classic" is deprecated)
+#timezone     : UTC        # a pytz timezone string, e.g., US/Central or Europe/Paris
+
+# Where your matplotlib data lives if you installed to a non-default
+# location.  This is where the matplotlib fonts, bitmaps, etc reside
+#datapath : /home/jdhunter/mpldata
+
+
+### LINES
+# See http://matplotlib.org/api/artist_api.html#module-matplotlib.lines 
+# for more information on line properties.
+lines.linewidth                         : .6
+lines.linestyle                         : -
+lines.color                             : C0
+lines.marker                            : None
+lines.markeredgewidth                   : .4
+lines.markersize                        : 6
+lines.dash_joinstyle                    : miter
+lines.dash_capstyle                     : butt
+lines.solid_joinstyle                   : miter
+lines.solid_capstyle                    : projecting
+lines.antialiased                       : True
+
+# The three standard dash patterns. These are scaled by the linewidth.
+lines.dashed_pattern                    : 5, 2
+lines.dashdot_pattern                   : 4.8, 1.2, 0.8, 1.2
+lines.dotted_pattern                    : 1., 1.7
+lines.scale_dashes                      : True
+
+markers.fillstyle                       : full
+
+### PATCHES
+# Patches are graphical objects that fill 2D space, like polygons or
+# circles.  See
+# http://matplotlib.org/api/artist_api.html#module-matplotlib.patches
+# information on patch properties
+patch.linewidth                         : .6
+patch.facecolor                         : C0
+patch.edgecolor                         : black
+patch.force_edgecolor                   : False
+patch.antialiased                       : True 
+
+### HATCHES
+hatch.color                             : k
+hatch.linewidth                         : .4
+
+### Boxplot
+boxplot.notch                           : False
+boxplot.vertical                        : True
+boxplot.whiskers                        : 1.5
+boxplot.bootstrap                       : None
+boxplot.patchartist                     : False
+boxplot.showmeans                       : False
+boxplot.showcaps                        : True
+boxplot.showbox                         : True
+boxplot.showfliers                      : True
+boxplot.meanline                        : False
+
+boxplot.flierprops.color                : k
+boxplot.flierprops.marker               : 'o'
+boxplot.flierprops.markerfacecolor      : None
+boxplot.flierprops.markeredgecolor      : k
+boxplot.flierprops.markersize           : 6
+boxplot.flierprops.linestyle            : None
+boxplot.flierprops.linewidth            : 1.0
+
+boxplot.boxprops.color                  : k
+boxplot.boxprops.linewidth              : 1.0
+boxplot.boxprops.linestyle              : -
+
+boxplot.whiskerprops.color              : k
+boxplot.whiskerprops.linewidth          : 1.0
+boxplot.whiskerprops.linestyle          : -
+
+boxplot.capprops.color                  : k
+boxplot.capprops.linewidth              : 1.0
+boxplot.capprops.linestyle              : -
+
+boxplot.medianprops.color               : C1
+boxplot.medianprops.linewidth           : 1.0
+boxplot.medianprops.linestyle           : -
+
+boxplot.meanprops.color                 : C2
+boxplot.meanprops.marker                : ^
+boxplot.meanprops.markerfacecolor       : C2
+boxplot.meanprops.markeredgecolor       : C2
+boxplot.meanprops.markersize            :  6
+boxplot.meanprops.linestyle             : None
+boxplot.meanprops.linewidth             : 1.0
+
+### FONT
+#
+# font properties used by text.Text.  See
+# http://matplotlib.org/api/font_manager_api.html for more
+# information on font properties.  The 6 font properties used for font
+# matching are given below with their default values.
+#
+# The font.family property has five values: 'serif' (e.g., Times),
+# 'sans-serif' (e.g., Helvetica), 'cursive' (e.g., Zapf-Chancery),
+# 'fantasy' (e.g., Western), and 'monospace' (e.g., Courier).  Each of
+# these font families has a default list of font names in decreasing
+# order of priority associated with them.  When text.usetex is False,
+# font.family may also be one or more concrete font names.
+#
+# The font.style property has three values: normal (or roman), italic
+# or oblique.  The oblique style will be used for italic, if it is not
+# present.
+#
+# The font.variant property has two values: normal or small-caps.  For
+# TrueType fonts, which are scalable fonts, small-caps is equivalent
+# to using a font size of 'smaller', or about 83%% of the current font
+# size.
+#
+# The font.weight property has effectively 13 values: normal, bold,
+# bolder, lighter, 100, 200, 300, ..., 900.  Normal is the same as
+# 400, and bold is 700.  bolder and lighter are relative values with
+# respect to the current weight.
+#
+# The font.stretch property has 11 values: ultra-condensed,
+# extra-condensed, condensed, semi-condensed, normal, semi-expanded,
+# expanded, extra-expanded, ultra-expanded, wider, and narrower.  This
+# property is not currently implemented.
+#
+# The font.size property is the default font size for text, given in pts.
+# 10 pt is the standard value.
+
+font.family         : sans-serif
+font.style          : normal
+font.variant        : normal
+font.weight         : light
+font.stretch        : normal
+
+# note that font.size controls default text sizes.  To configure
+# special text sizes tick labels, axes, labels, title, etc, see the rc
+# settings for axes and ticks. Special text sizes can be defined
+# relative to font.size, using the following values: xx-small, x-small,
+# small, medium, large, x-large, xx-large, larger, or smaller
+font.size           : 9.
+font.serif          : Times
+font.sans-serif     : Overpass
+font.monospace      : Consolas
+
+### TEXT
+# text properties used by text.Text.  See
+# http://matplotlib.org/api/artist_api.html#module-matplotlib.text for more
+# information on text properties
+
+text.color          : black
+
+### LaTeX customizations. See http://wiki.scipy.org/Cookbook/Matplotlib/UsingTex
+#text.usetex         : False 
+#text.latex.unicode  : False 
+text.latex.preamble : \usepackage[scr]{rsfso}
+text.antialiased    : True
+mathtext.fontset    : custom
+mathtext.rm         : Product Sans Light
+mathtext.sf         : Product Sans Light
+mathtext.it         : Product Sans Light
+mathtext.bf         : Product Sans Light
+
+
+### AXES
+# default face and edge color, default tick sizes,
+# default fontsizes for ticklabels, and so on.  See
+# http://matplotlib.org/api/axes_api.html#module-matplotlib.axes
+axes.facecolor      : white
+axes.edgecolor      : k
+axes.linewidth      : .5
+
+axes.grid           : False
+axes.titlesize      : large
+axes.titleweight    : bold
+axes.titlepad       : 10.0
+axes.labelsize      : small
+axes.labelpad       : 4.0
+axes.labelweight    : light
+axes.labelcolor     : black
+axes.axisbelow      : False
+
+axes.formatter.limits       : -7, 7
+axes.formatter.use_mathtext : False
+axes.formatter.useoffset    : True
+axes.formatter.offset_threshold : 4
+axes.spines.left   : True 
+axes.spines.bottom : True
+axes.spines.top    : True
+axes.spines.right  : True
+
+
+axes.unicode_minus : True
+axes.prop_cycle    : cycler('color', ['199fff', 'ff5618', 'ffd018', '62c147', '7b47c1', 'f4a742', 'f44189', '2ac9c4', 'a85d41', '9e9e9e', 'a08428', '94a028', '28a04b', '284ba0', 'ae25c4'])
+axes.autolimit_mode :round_numbers
+axes.xmargin        : .05 
+axes.ymargin        : .05 
+
+#polaraxes.grid      : True    # display grid on polar axes
+#axes3d.grid         : True    # display grid on 3d axes
+
+### DATES
+# These control the default format strings used in AutoDateFormatter.
+# Any valid format datetime format string can be used (see the python
+# `datetime` for details).  For example using '%%x' will use the locale date representation
+# '%%X' will use the locale time representation and '%%c' will use the full locale datetime
+# representation.
+# These values map to the scales:
+#    {'year': 365, 'month': 30, 'day': 1, 'hour': 1/24, 'minute': 1 / (24 * 60)}
+
+date.autoformatter.year     : %Y
+date.autoformatter.month    : %Y/%m
+date.autoformatter.day      : %Y/%m/%d
+date.autoformatter.hour     : %m/%d %H:00
+date.autoformatter.minute   : %H:%M
+date.autoformatter.second   : %H:%M:%S
+date.autoformatter.microsecond   : %M:%S.%f
+
+### TICKS
+# see http://matplotlib.org/api/axis_api.html#matplotlib.axis.Tick
+xtick.top             : True
+xtick.bottom          : True
+xtick.major.size      : 3.5
+xtick.minor.size      : 1.7
+xtick.major.width     : .5
+xtick.minor.width     : .5
+xtick.major.pad       : 4
+xtick.minor.pad       : 4
+xtick.color           : k
+xtick.labelsize       : small
+xtick.direction       : out
+
+ytick.left            : True
+ytick.right           : True
+ytick.major.size      : 3.5
+ytick.minor.size      : 1.7
+ytick.major.width     : .5
+ytick.minor.width     : .5
+ytick.major.pad       : 4
+ytick.minor.pad       : 4
+ytick.color           : k
+ytick.labelsize       : small
+ytick.direction       : out
+
+
+### GRIDS
+#grid.color       :   b0b0b0    # grid color
+#grid.linestyle   :   -         # solid
+#grid.linewidth   :   0.8       # in points
+#grid.alpha       :   1.0       # transparency, between 0.0 and 1.0
+
+### Legend
+legend.loc           : best
+legend.frameon       : False
+legend.framealpha    : 1.
+legend.facecolor     : w
+legend.edgecolor     : .95
+legend.fancybox      : False
+legend.shadow        : False
+legend.numpoints     : 1
+legend.scatterpoints : 1
+legend.markerscale   : .7
+legend.fontsize      : small
+legend.borderpad     : 0.7
+legend.labelspacing  : 0.5
+legend.handlelength  : 1.7
+legend.handleheight  : 0.7
+legend.handletextpad : 0.8
+legend.borderaxespad : -3.
+legend.columnspacing : 2.0
+
+### FIGURE
+# See http://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure
+figure.titlesize : large
+figure.titleweight : normal   # weight of the figure title
+figure.figsize   : 6.4, 4.8   # figure size in inches
+figure.dpi       : 150      # figure dots per inch
+figure.facecolor : white   # figure facecolor; 0.75 is scalar gray
+figure.edgecolor : white   # figure edgecolor
+figure.autolayout : False
+figure.max_open_warning : 20
+
+# The figure subplot parameters.  All dimensions are a fraction of the
+figure.subplot.left    : 0.125
+figure.subplot.right   : 0.9
+figure.subplot.bottom  : 0.11
+figure.subplot.top     : 0.9
+figure.subplot.wspace  : 0.2
+figure.subplot.hspace  : 0.2
+
+### IMAGES
+image.aspect : auto
+image.interpolation  : nearest   # see help(imshow) for options
+image.cmap   : viridis
+image.lut    : 256
+image.origin : upper
+image.resample  : True
+image.composite_image : True
+
+### CONTOUR PLOTS
+contour.negative_linestyle : dashed # dashed | solid
+contour.corner_mask        : True   # True | False | legacy
+
+### ERRORBAR PLOTS
+errorbar.capsize : 0             # length of end cap on error bars in pixels
+
+### HISTOGRAM PLOTS
+hist.bins : 10          
+
+### SCATTER PLOTS
+scatter.marker : o     
+
+### SAVING FIGURES
+path.simplify : True
+path.simplify_threshold : 0.1
+path.snap : True
+path.sketch : None 
+
+# the default savefig params can be different from the display params
+# e.g., you may want a higher resolution, or to make the figure
+# background white
+savefig.dpi         : figure
+savefig.facecolor   : white
+savefig.edgecolor   : white
+savefig.format      : png
+savefig.bbox        : tight
+savefig.pad_inches  : 0.1
+savefig.jpeg_quality: 95
+savefig.directory   : ~
+savefig.transparent : False
