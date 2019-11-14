@@ -15,11 +15,16 @@ import argparse
 import matplotlib.pyplot as plt
 
 plt.style.use('ggplot')
+import matplotlib as mpl
+label_size = 18
+mpl.rcParams['xtick.labelsize'] = label_size
+mpl.rcParams['ytick.labelsize'] = label_size                                    
 
 PATH = '/mnt/drive1/rbalSpace/distances/'
 BINS = 80
+EPOCHS = ['0','20','40','60','80']
 
-for DATASET in ['cifar10']:
+for DATASET in ['svhn','cifar10']:
     # Data Loading
     #-------------
     if DATASET=='mnist':
@@ -40,7 +45,7 @@ for DATASET in ['cifar10']:
                             standardize.transform(dataset['images/valid_set'])
 
     for DATA_AUGMENTATION in ['True','False']:
-        filename = 'save_test_v2_{}_{}.pkl'.format(DATASET,DATA_AUGMENTATION)
+        filename = 'save_largedense_test_v2_{}_{}.pkl'.format(DATASET,DATA_AUGMENTATION)
         FILENAME = PATH+filename
         if not os.path.isfile(FILENAME):
             continue
@@ -50,7 +55,7 @@ for DATASET in ['cifar10']:
         L = len(distances_train['0'])
         print("L=",L)
         print("SHAPES=",[np.shape(d) for d in distances_train['0']])
-        for epoch in ['0','20','40','60','80']:
+        for epoch in EPOCHS:
             for l in range(1,L):
                 print(epoch,l)
                 distances_train[epoch][l]=np.minimum(distances_train[epoch][l-1],
@@ -98,6 +103,8 @@ for DATASET in ['cifar10']:
 
             ylim = plt.gca().get_ylim()
             plt.ylim([-20,ylim[1]])
+            plt.xlim([-18,-2])
+
             ticks = np.asarray(range(len(train_list)))*PAS
             ticks = np.concatenate([ticks,ticks+OFFSET])
             plt.yticks(ticks, ytickslabel+ytickslabel)
@@ -106,8 +113,8 @@ for DATASET in ['cifar10']:
             plt.close()
 
 
-        ytickslabel = list(np.asarray(range(L)).astype('str'))
-        for epoch in ['0','20','40','60','80']:
+        ytickslabel = ['1']+['' for i in range(1,L-1)]+[str(L)]
+        for epoch in EPOCHS:
 
             train_list = distances_train[epoch]
             test_list = distances_test[epoch]
@@ -120,11 +127,13 @@ for DATASET in ['cifar10']:
                                                 +'_e{}.pdf'.format(epoch)
             do_plot(train_list, test_list, False, name, ytickslabel)
 
-        ytickslabel = ['0','20','40','60','80']
+        ytickslabel = [EPOCHS[0]]+['' for i in range(len(EPOCHS)-2)]\
+                        +[EPOCHS[-1]]
+        ytickslabels = EPOCHS
         for l in range(L):
 
-            train_list = [distances_train[e][l] for e in ytickslabel]
-            test_list = [distances_test[e][l] for e in ytickslabel]
+            train_list = [distances_train[e][l] for e in ytickslabels]
+            test_list = [distances_test[e][l] for e in ytickslabels]
 
             name = 'images/loghistogram_epochs_'+filename[:-4]\
                                                 +'_l{}.pdf'.format(l)

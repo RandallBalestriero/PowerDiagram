@@ -70,7 +70,7 @@ outputs = dnn[0::2].as_list()
 
 outputs = tf.concat(outputs,-1)
 output = sknet.Worker(outputs=outputs, context='train_set',
-                      deterministic=False)
+                      feed_dict=dnn.deter_dict(False))
 
 # Pipeline
 #---------
